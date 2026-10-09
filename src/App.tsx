@@ -1,6 +1,14 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 
+const firebaseConfig = {
+  apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A", 
+  authDomain: "hinh123-fd678.firebaseapp.com",
+  projectId: "hinh123-fd678",
+  storageBucket: "hinh123-fd678.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456"
+};
 // Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
 import { initializeApp, getApps } from 'firebase/app';
 import { 
