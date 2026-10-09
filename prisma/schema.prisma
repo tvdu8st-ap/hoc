@@ -1,0 +1,246 @@
+// ==============================================================================
+// Prisma Schema for Trường Học - Góc Lắng Nghe - Cùng Em Trưởng Thành
+// Cơ sở dữ liệu Tư vấn Tâm lý Học đường và Sức khỏe Tinh thần
+//
+// LƯU Ý QUAN TRỌNG:
+// 1. Hệ thống sử dụng Drizzle ORM (src/db/schema.ts) làm engine truy vấn chính.
+// 2. Chế độ phát triển (Development Mode): KHÔNG yêu cầu DATABASE_URL, server sẽ tự
+//    động chạy chế độ In-Memory để xem và kiểm thử giao diện.
+// 3. Chế độ Production: BẮT BUỘC cung cấp DATABASE_URL hợp lệ để kết nối PostgreSQL.
+// ==============================================================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleType {
+  STUDENT
+  PARENT
+  TEACHER
+  COUNSELOR
+  ADMIN
+}
+
+enum GradeLevel {
+  PRIMARY     // Tiểu học (Lớp 1-5)
+  SECONDARY   // THCS (Lớp 6-9)
+  GENERAL     // Toàn trường / Chung
+}
+
+enum RequestTopic {
+  STUDY_PRESSURE     // Áp lực học tập, thi cử
+  PEER_FRIENDSHIP    // Tình bạn, mâu thuẫn bạn bè
+  FAMILY_RELATION    // Gia đình, bố mẹ
+  EMOTIONAL_STRESS   // Lo âu, buồn bã, cảm xúc bất an
+  SCHOOL_BULLYING    // Bắt nạt học đường
+  CYBER_BULLYING     // Bắt nạt trên mạng
+  COMMUNICATION_SKILL // Kỹ năng giao tiếp, tự tin
+  PUBERTY_GROWTH     // Dậy thì, thay đổi cơ thể và tâm sinh lý
+  OTHER              // Vấn đề khác
+}
+
+enum RequestStatus {
+  RECEIVED           // Mới tiếp nhận
+  CLASSIFYING        // Đang phân loại
+  ASSIGNED           // Đã phân công
+  IN_PROGRESS        // Đang hỗ trợ
+  WAITING_FEEDBACK   // Chờ trao đổi tiếp
+  RESOLVED           // Đã hoàn tất
+  CLOSED             // Đã đóng theo quy trình
+}
+
+enum MeetingFormat {
+  IN_PERSON          // Gặp trực tiếp tại Phòng Tư vấn học đường (Phòng 204)
+  PRIVATE_ONLINE     // Trực tuyến qua kênh bảo mật của trường
+  PHONE_SAFE         // Trao đổi qua điện thoại giờ phù hợp
+}
+
+enum AppointmentStatus {
+  SCHEDULED          // Đã xếp lịch
+  CONFIRMED          // Đã xác nhận hai bên
+  COMPLETED          // Đã hoàn thành
+  RESCHEDULED        // Đã đổi lịch
+  CANCELLED          // Đã hủy
+}
+
+model User {
+  id            String       @id @default(uuid())
+  username      String       @unique
+  email         String?      @unique
+  passwordHash  String
+  fullName      String
+  role          RoleType     @default(STUDENT)
+  gradeLevel    GradeLevel?  @default(SECONDARY)
+  phoneNumber   String?
+  avatarUrl     String?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  studentProfile       StudentProfile?
+  assignedRequests     CounselingAssignment[]
+  counselingNotes      CounselingNote[]
+  appointmentsAsStaff  CounselingAppointment[]  @relation("StaffAppointments")
+  appointmentsAsStudent CounselingAppointment[] @relation("StudentAppointments")
+  auditLogs            AuditLog[]
+  resourcesCreated     EducationalResource[]
+}
+
+model StudentProfile {
+  id             String      @id @default(uuid())
+  userId         String      @unique
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schoolClass    String?     // Lớp: VD "6A1", "3B"
+  parentName     String?
+  parentContact  String?
+  emergencyNote  String?
+  hasConsent     Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model CounselingRequest {
+  id               String          @id @default(uuid())
+  requestCode      String          @unique // Mã ngẫu nhiên bảo mật, vd "GLN-849201"
+  gradeLevel       GradeLevel
+  topic            RequestTopic
+  isAnonymous      Boolean         @default(false)
+  studentAlias     String?         // Tên hoặc biệt danh bảo mật
+  studentClass     String?         // Lớp (tùy chọn)
+  contactMethod    String          // Kênh liên hệ an toàn (Email, điện thoại, trực tiếp)
+  contactValue     String?
+  preferredTime    String?         // Khung giờ phù hợp: Giờ ra chơi, sau giờ học, cuối tuần
+  content          String          // Nội dung chia sẻ
+  status           RequestStatus   @default(RECEIVED)
+  urgencyLevel     String          @default("NORMAL") // NORMAL, URGENT, EMERGENCY
+  privacyAgreed    Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  assignments      CounselingAssignment[]
+  internalNotes    CounselingNote[]
+  appointments     CounselingAppointment[]
+  conversations    RequestMessage[]
+}
+
+model RequestMessage {
+  id               String            @id @default(uuid())
+  requestId        String
+  request          CounselingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  senderType       String            // "STUDENT" | "COUNSELOR"
+  senderName       String            // "Em học sinh" | "Thầy/Cô Tư vấn"
+  message          String
+  createdAt        DateTime          @default(now())
+}
+
+model CounselingAssignment {
+  id             String            @id @default(uuid())
+  requestId      String
+  request        CounselingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  counselorId    String
+  counselor      User              @relation(fields: [counselorId], references: [id])
+  assignedAt     DateTime          @default(now())
+  assignmentRole String            @default("PRIMARY") // PRIMARY, SECONDARY, SUPERVISOR
+}
+
+model CounselingNote {
+  id             String            @id @default(uuid())
+  requestId      String
+  request        CounselingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId       String
+  author         User              @relation(fields: [authorId], references: [id])
+  isPrivate      Boolean           @default(true) // Ghi chú nghiệp vụ bảo mật nghiêm ngặt
+  actionTaken    String?           // Các bước hỗ trợ đã thực hiện
+  noteContent    String            // Nội dung đánh giá chuyên môn
+  createdAt      DateTime          @default(now())
+}
+
+model CounselingAppointment {
+  id             String            @id @default(uuid())
+  appointmentCode String           @unique
+  requestId      String?
+  request        CounselingRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  counselorId    String
+  counselor      User              @relation("StaffAppointments", fields: [counselorId], references: [id])
+  studentId      String?
+  student        User?             @relation("StudentAppointments", fields: [studentId], references: [id], onDelete: SetNull)
+  studentName    String            // Tên học sinh hoặc ẩn danh
+  date           String            // YYYY-MM-DD
+  startTime      String            // HH:mm
+  endTime        String            // HH:mm
+  format         MeetingFormat     @default(IN_PERSON)
+  location       String            @default("Phòng Tư vấn Tâm lý Học đường (P.204)")
+  status         AppointmentStatus @default(SCHEDULED)
+  reasonTopic    RequestTopic
+  privateNotes   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model EducationalResource {
+  id             String       @id @default(uuid())
+  title          String
+  slug           String       @unique
+  summary        String
+  content        String
+  category       String       // Kỹ năng cảm xúc, Tình bạn, Áp lực học tập, An toàn mạng, Phòng chống bạo lực
+  gradeLevel     GradeLevel   @default(GENERAL)
+  thumbnailUrl   String?
+  readTimeMinutes Int         @default(3)
+  isPublished    Boolean      @default(true)
+  authorId       String?
+  author         User?        @relation(fields: [authorId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model BullyingReport {
+  id             String       @id @default(uuid())
+  reportCode     String       @unique
+  gradeLevel     GradeLevel
+  victimType     String       // "Bản thân em bị", "Em chứng kiến bạn khác", "Báo cáo nặc danh"
+  incidentType   String       // Bạo lực thể xác, Lăng mạ/xúc phạm, Cô lập tẩy chay, Bắt nạt mạng
+  location       String?      // Nhà vệ sinh, hành lang, cổng trường, mạng xã hội...
+  incidentDate   String?
+  description    String
+  safeContact    String?
+  isAnonymous    Boolean      @default(true)
+  status         String       @default("URGENT_REVIEW") // URGENT_REVIEW, INVESTIGATING, SUPPORTING, RESOLVED
+  actionPlan     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model EmotionCheckin {
+  id             String       @id @default(uuid())
+  sessionId      String?      // Ẩn danh hoặc ID phiên làm việc
+  moodKey        String       // HAPPY, CALM, WORRIED, SAD, ANGRY, CONFUSED, TIRED
+  moodLabel      String
+  energyScore    Int?         // 1 - 5
+  note           String?      // Cảm nghĩ ngắn gọn
+  gradeLevel     GradeLevel   @default(GENERAL)
+  createdAt      DateTime     @default(now())
+}
+
+model AuditLog {
+  id             String       @id @default(uuid())
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  actionType     String       // LOGIN, VIEW_REQUEST, UPDATE_STATUS, ASSIGN_COUNSELOR, CREATE_NOTE
+  targetResource String
+  ipAddress      String?
+  details        String?      // Không chứa mật khẩu hoặc bí mật
+  createdAt      DateTime     @default(now())
+}
+
+model SystemSetting {
+  key            String       @id
+  value          String
+  description    String?
+  updatedAt      DateTime     @updatedAt
+}

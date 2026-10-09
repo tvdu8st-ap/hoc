@@ -1,0 +1,6 @@
+{
+  "name": "Góc Lắng Nghe - Cùng Em Trưởng Thành",
+  "description": "Website tư vấn tâm lý học đường, hỗ trợ cảm xúc và rèn luyện kỹ năng sống cho học sinh Tiểu học và THCS cùng trợ lý AI Bạn Đồng Hành.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
