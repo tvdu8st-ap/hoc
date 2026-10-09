@@ -1,14 +1,11 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A", 
-  authDomain: "hinh123-fd678.firebaseapp.com",
-  projectId: "hinh123-fd678",
-  storageBucket: "hinh123-fd678.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef123456"
-};
 // Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
 import { initializeApp, getApps } from 'firebase/app';
 import { 
@@ -47,7 +44,7 @@ import {
 // 1. CẤU HÌNH & KHỞI TẠO FIREBASE (hinh123-fd678)
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyDummyKeyForProjectHinh123", // Thay bằng API Key thật từ Firebase Console của bạn
+  apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A", 
   authDomain: "hinh123-fd678.firebaseapp.com",
   projectId: "hinh123-fd678",
   storageBucket: "hinh123-fd678.appspot.com",
@@ -149,7 +146,6 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
       </div>
 
       <div className="flex items-center gap-6 text-sm font-medium text-slate-600">
-        {/* Đã sửa từ thẻ a href sang Link to để tránh lỗi 404 */}
         <Link to="/" className="hover:text-indigo-600 transition">Trang chủ</Link>
         <Link to="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</Link>
         <Link to="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</Link>
@@ -206,7 +202,6 @@ function EmergencyModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   );
 }
 
-// Các trang chức năng mẫu tích hợp Firestore
 function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
   return (
     <div className="max-w-4xl mx-auto px-6 py-16 text-center">
