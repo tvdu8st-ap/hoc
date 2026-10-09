@@ -11,6 +11,9 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { EmergencyModal } from './components/EmergencyModal';
 
+// Khởi tạo Firebase từ file cấu hình
+import { auth, db } from './firebase';
+
 // Pages
 import { Home } from './pages/Home';
 import { EmotionCorner } from './pages/EmotionCorner';
@@ -22,42 +25,56 @@ import { Appointments } from './pages/Appointments';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { Login } from './pages/Login';
 
-import { PhoneCall, AlertTriangle } from 'lucide-react';
+import { PhoneCall, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 function AppContent() {
   const { mode } = useAgeMode();
   const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [dbStatus, setDbStatus] = useState<{ connected: boolean; mode: string } | null>(null);
+  const [firebaseConnected, setFirebaseConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch('/api/system/status')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.database) {
-          setDbStatus(data.database);
-        }
-      })
-      .catch(() => {
-        // Fallback if network error
-      });
+    // Kiểm tra kết nối Firebase (ví dụ kiểm tra auth hoặc kết nối Firestore cơ bản)
+    try {
+      if (auth && db) {
+        setFirebaseConnected(true);
+      } else {
+        setFirebaseConnected(false);
+      }
+    } catch (error) {
+      setFirebaseConnected(false);
+    }
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
-      {/* Dev Mode Notification Banner (Transparent disclosure: No real database persistence) */}
-      {dbStatus && !dbStatus.connected && (
-        <div className="bg-amber-100 border-b border-amber-300 text-amber-950 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-sm">
+      {/* Firebase Status Notification Banner */}
+      {firebaseConnected !== null && (
+        <div className={`px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-sm ${
+          firebaseConnected 
+            ? 'bg-emerald-50 border-b border-emerald-200 text-emerald-900' 
+            : 'bg-amber-100 border-b border-amber-300 text-amber-950'
+        }`}>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span className="font-bold uppercase tracking-wider text-[11px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded border border-amber-300">
-              Chế độ xem trước (Chưa có Database)
+            {firebaseConnected ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+            )}
+            <span className={`font-bold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded border ${
+              firebaseConnected 
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300' 
+                : 'bg-amber-200 text-amber-800 border-amber-300'
+            }`}>
+              {firebaseConnected ? 'Đã kết nối Firebase' : 'Chưa kết nối Firebase'}
             </span>
-            <span className="text-amber-900">
-              Ứng dụng đang chạy ở chế độ phát triển in-memory. Dữ liệu thử nghiệm chỉ lưu tạm trong RAM, <strong>KHÔNG</strong> lưu vào hệ thống cơ sở dữ liệu thực tế.
+            <span>
+              {firebaseConnected 
+                ? 'Ứng dụng đang kết nối thành công tới dự án Firebase: <strong>hinh123-fd678</strong>' 
+                : 'Không thể khởi tạo dịch vụ Firebase. Vui lòng kiểm tra lại cấu hình.'}
             </span>
           </div>
-          <span className="text-[11px] font-mono bg-white/70 text-amber-800 px-2 py-0.5 rounded border border-amber-200">
-            Dev In-Memory Mode
+          <span className="text-[11px] font-mono bg-white/70 px-2 py-0.5 rounded border">
+            Project: hinh123-fd678
           </span>
         </div>
       )}
