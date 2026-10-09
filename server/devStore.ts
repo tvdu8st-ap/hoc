@@ -397,10 +397,23 @@ class DevDataStore {
 
   findUser(identifier: string): DevUser | undefined {
     const clean = identifier.trim().toLowerCase();
+    // 1. Exact UID or email match first
+    const exact = this.users.find(
+      (u) => u.uid.toLowerCase() === clean || u.email.toLowerCase() === clean
+    );
+    if (exact) return exact;
+
+    // 2. Specific known aliases
+    if (clean.includes('thuytrang') || clean === 'usr-counselor-2') {
+      return this.users.find((u) => u.uid === 'usr-counselor-2');
+    }
+    if (clean.includes('tuananh') || clean === 'usr-counselor-1') {
+      return this.users.find((u) => u.uid === 'usr-counselor-1');
+    }
+
+    // 3. Role / prefix keywords
     return this.users.find(
       (u) =>
-        u.uid.toLowerCase() === clean ||
-        u.email.toLowerCase() === clean ||
         clean.includes(u.role.toLowerCase()) ||
         (clean.includes('hocsinh') && u.role === 'STUDENT') ||
         (clean.includes('tuvan') && u.role === 'COUNSELOR') ||

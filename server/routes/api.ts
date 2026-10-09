@@ -111,10 +111,32 @@ apiRouter.post('/auth/login', rateLimit(10, 60000), async (req: Request, res: Re
 
   // Mode: Real PostgreSQL
   try {
+    const aliasMap: Record<string, string> = {
+      'hocsinh.an': 'usr-student-1',
+      'hocsinh.binh': 'usr-student-2',
+      'tuvan.tuananh': 'usr-counselor-1',
+      'tuvan.thuytrang': 'usr-counselor-2',
+      'gvcn.lan': 'usr-teacher-1',
+      'phuhuynh.mai': 'usr-parent-1',
+      'quantri.minh': 'usr-admin-1',
+      'hocsinh': 'usr-student-1',
+      'student': 'usr-student-1',
+      'tuvan': 'usr-counselor-1',
+      'counselor': 'usr-counselor-1',
+      'gvcn': 'usr-teacher-1',
+      'teacher': 'usr-teacher-1',
+      'phuhuynh': 'usr-parent-1',
+      'parent': 'usr-parent-1',
+      'quantri': 'usr-admin-1',
+      'admin': 'usr-admin-1',
+    };
+
+    const targetUid = aliasMap[cleanUsername.toLowerCase()] || cleanUsername;
+
     const matchingUsers = await db
       .select()
       .from(users)
-      .where(or(eq(users.uid, cleanUsername), eq(users.email, cleanUsername)))
+      .where(or(eq(users.uid, targetUid), eq(users.uid, cleanUsername), eq(users.email, cleanUsername)))
       .limit(1);
 
     let targetUser = matchingUsers[0];

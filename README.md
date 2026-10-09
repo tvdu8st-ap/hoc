@@ -296,3 +296,23 @@ gunzip -c /var/backups/goclangnghe/backup_goclangnghe_YYYYMMDD_HHMMSS.sql.gz | \
 - **Phòng Tư vấn Tâm lý Học đường của Trường:** Phòng 204 (Tầng 2).
   - ThS. Nguyễn Tuấn Anh (Phụ trách tư vấn THCS).
   - Cô Nguyễn Thị Thùy Trang (Phụ trách tư vấn Tiểu học).
+
+---
+
+## 11. DANH SÁCH TÀI KHOẢN ĐĂNG NHẬP HỆ THỐNG (TÊN & MẬT KHẨU)
+
+Hệ thống hỗ trợ đăng nhập qua form chuẩn tại `/login` bằng **Tên đăng nhập (Username)**, **Mã định danh (UID)** hoặc **Email**. Ngoài ra, ở chế độ xem trước (Development / Preview), bạn có thể click vào danh sách tài khoản chuyển nhanh để vào ngay từng vai trò mà không cần gõ mật khẩu.
+
+| Vai trò | Họ và tên | Tên đăng nhập (Username) | Mã UID thay thế | Email đăng nhập | Mật khẩu | Quyền hạn & Chức năng |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Học sinh (THCS)** | Em Trần Hoài An | `hocsinh.an` | `usr-student-1` | `an.tran@school.edu.vn` | `demo123` | Gửi phiếu chia sẻ, chat AI tâm lý, làm bài trắc nghiệm cảm xúc |
+| **Học sinh (Tiểu học)** | Em Nguyễn Thanh Bình | `hocsinh.binh` | `usr-student-2` | `binh.nguyen@school.edu.vn` | `demo123` | Giao diện thân thiện khối Tiểu học, chia sẻ cảm xúc với chuyên viên |
+| **Tư vấn viên (THCS)** | ThS. Tâm lý Nguyễn Tuấn Anh | `tuvan.tuananh` | `usr-counselor-1` | `tuananh.nguyen@school.edu.vn` | `demo123` | Tiếp nhận và điều phối ca tư vấn, ghi chép nội bộ bảo mật, xếp lịch hẹn |
+| **Tư vấn viên (Tiểu học)** | Cô Nguyễn Thị Thùy Trang | `tuvan.thuytrang` | `usr-counselor-2` | `thuytrang.nguyen@school.edu.vn` | `demo123` | Phụ trách phòng tư vấn Khối Tiểu học, đồng hành cùng học sinh nhỏ |
+| **Giáo viên Chủ nhiệm** | Cô Nguyễn Thị Mai Lan | `gvcn.lan` | `usr-teacher-1` | `lan.nguyen@school.edu.vn` | `demo123` | Xem học sinh lớp 7A2 phụ trách có phiếu cần hỗ trợ, phối hợp tư vấn |
+| **Phụ huynh Học sinh** | Chị Hoàng Tuyết Mai | `phuhuynh.mai` | `usr-parent-1` | `mai.hoang@gmail.com` | `demo123` | Đọc tài liệu giáo dục con, liên hệ ban tư vấn tâm lý trường |
+| **Quản trị viên / BGH** | Thầy Phạm Quang Minh | `quantri.minh` | `usr-admin-1` | `minh.pham@school.edu.vn` | `admin123` | Toàn quyền quản trị hệ thống, xem báo cáo tổng hợp, nhật ký kiểm toán |
+
+*Ghi chú:*
+- Trong giao diện Đăng nhập (`/login`), có sẵn nút **"Vào ngay"** bên cạnh từng tài khoản để đăng nhập 1-click rất nhanh chóng và tiện lợi.
+- Khi chuyển đổi giữa các vai trò trên thanh điều hướng (Navbar) hoặc bảng chuyển vai, dữ liệu phiên làm việc sẽ được cập nhật tương ứng.

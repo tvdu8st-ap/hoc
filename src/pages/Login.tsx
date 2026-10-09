@@ -10,6 +10,8 @@ import {
   ArrowRight,
   LogOut,
   Users,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 export const Login: React.FC = () => {
@@ -19,6 +21,96 @@ export const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const sampleAccounts = [
+    {
+      role: 'STUDENT',
+      roleLabel: 'Học sinh THCS',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      fullName: 'Em Trần Hoài An',
+      username: 'hocsinh.an',
+      altUids: 'usr-student-1',
+      password: 'demo123',
+      description: 'Gửi phiếu hỗ trợ, chat AI tư vấn, làm trắc nghiệm cảm xúc',
+    },
+    {
+      role: 'STUDENT',
+      roleLabel: 'Học sinh Tiểu học',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      fullName: 'Em Nguyễn Thanh Bình',
+      username: 'hocsinh.binh',
+      altUids: 'usr-student-2',
+      password: 'demo123',
+      description: 'Giao diện thân thiện khối Tiểu học, chia sẻ cảm xúc với thầy cô',
+    },
+    {
+      role: 'COUNSELOR',
+      roleLabel: 'Tư vấn viên THCS',
+      badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+      fullName: 'ThS. Tâm lý Nguyễn Tuấn Anh',
+      username: 'tuvan.tuananh',
+      altUids: 'usr-counselor-1',
+      password: 'demo123',
+      description: 'Tiếp nhận ca tư vấn, ghi chú nghiệp vụ bảo mật, xếp lịch hẹn',
+    },
+    {
+      role: 'COUNSELOR',
+      roleLabel: 'Tư vấn viên Tiểu học',
+      badgeColor: 'bg-sky-50 text-sky-700 border-sky-200',
+      fullName: 'Cô Nguyễn Thị Thùy Trang',
+      username: 'tuvan.thuytrang',
+      altUids: 'usr-counselor-2',
+      password: 'demo123',
+      description: 'Phụ trách phòng tư vấn Khối Tiểu học, đồng hành cùng học sinh nhỏ',
+    },
+    {
+      role: 'TEACHER',
+      roleLabel: 'Giáo viên Chủ nhiệm',
+      badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      fullName: 'Cô Nguyễn Thị Mai Lan (7A2)',
+      username: 'gvcn.lan',
+      altUids: 'usr-teacher-1',
+      password: 'demo123',
+      description: 'Theo dõi học sinh lớp chủ nhiệm được điều phối tâm lý',
+    },
+    {
+      role: 'PARENT',
+      roleLabel: 'Phụ huynh Học sinh',
+      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
+      fullName: 'Chị Hoàng Tuyết Mai',
+      username: 'phuhuynh.mai',
+      altUids: 'usr-parent-1',
+      password: 'demo123',
+      description: 'Tra cứu kiến thức giáo dục giới tính, kết nối ban tâm lý',
+    },
+    {
+      role: 'ADMIN',
+      roleLabel: 'Quản trị viên / BGH',
+      badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      fullName: 'Thầy Phạm Quang Minh',
+      username: 'quantri.minh',
+      altUids: 'usr-admin-1',
+      password: 'admin123',
+      description: 'Ban Giám Hiệu, báo cáo thống kê trường, nhật ký kiểm toán',
+    },
+  ];
+
+  const handleCopy = (text: string, key: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleQuickLogin = async (u: string, p: string) => {
+    setUsername(u);
+    setPassword(p);
+    setLoading(true);
+    setError(null);
+    const ok = await login(u, p);
+    setLoading(false);
+    if (!ok) setError('Đăng nhập không thành công.');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +231,7 @@ export const Login: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Ví dụ: hocsinh.an hoặc tuvan.tuan"
+                  placeholder="Ví dụ: tuvan.tuananh hoặc hocsinh.an"
                   className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50 focus:ring-2 focus:ring-sky-500"
                 />
               </div>
@@ -234,12 +326,23 @@ export const Login: React.FC = () => {
               </button>
 
               <button
-                onClick={() => switchDemoUser('COUNSELOR')}
+                onClick={() => login('tuvan.tuananh', 'demo123')}
                 className="w-full p-3 rounded-2xl bg-white border border-slate-200 hover:border-sky-300 text-left text-xs transition-colors shadow-2xs flex items-center justify-between"
               >
                 <div>
-                  <div className="font-bold text-slate-900">🩺 Tư vấn viên: ThS. Nguyễn Tuấn Anh</div>
-                  <div className="text-[11px] text-slate-500">Toàn quyền xử lý ca & ghi chú nội bộ</div>
+                  <div className="font-bold text-slate-900">🩺 Tư vấn THCS: ThS. Nguyễn Tuấn Anh</div>
+                  <div className="text-[11px] text-slate-500">Tài khoản: tuvan.tuananh • Mật khẩu: demo123</div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-400" />
+              </button>
+
+              <button
+                onClick={() => login('tuvan.thuytrang', 'demo123')}
+                className="w-full p-3 rounded-2xl bg-white border border-slate-200 hover:border-sky-300 text-left text-xs transition-colors shadow-2xs flex items-center justify-between"
+              >
+                <div>
+                  <div className="font-bold text-slate-900">🌸 Tư vấn Tiểu học: Cô Nguyễn Thị Thùy Trang</div>
+                  <div className="text-[11px] text-slate-500">Tài khoản: tuvan.thuytrang • Mật khẩu: demo123</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400" />
               </button>
@@ -278,6 +381,105 @@ export const Login: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Full Accounts Reference Table */}
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold text-sm">
+              🔑
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Danh Sách Tài Khoản & Mật Khẩu Đăng Nhập
+              </h3>
+              <p className="text-xs text-slate-500">
+                Hệ thống hỗ trợ đăng nhập bằng Tên đăng nhập (Username), Mã định danh (UID) hoặc Email.
+              </p>
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
+            Mật khẩu chung: <code className="font-mono font-bold text-slate-800">demo123</code> (Admin: <code className="font-mono font-bold text-slate-800">admin123</code>)
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500 font-bold bg-slate-50/50">
+                <th className="py-3 px-3">Vai trò</th>
+                <th className="py-3 px-3">Họ và tên</th>
+                <th className="py-3 px-3">Tên đăng nhập (Username)</th>
+                <th className="py-3 px-3">Mã UID thay thế</th>
+                <th className="py-3 px-3">Mật khẩu</th>
+                <th className="py-3 px-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {sampleAccounts.map((acc) => (
+                <tr key={acc.username} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3 px-3">
+                    <span className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border ${acc.badgeColor}`}>
+                      {acc.roleLabel}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 font-medium text-slate-900">
+                    <div>{acc.fullName}</div>
+                    <div className="text-[11px] text-slate-400 font-normal">{acc.description}</div>
+                  </td>
+                  <td className="py-3 px-3 font-mono font-bold text-sky-700">
+                    <div className="flex items-center gap-1.5">
+                      <span>{acc.username}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(acc.username, `u-${acc.username}`)}
+                        className="text-slate-400 hover:text-slate-600 p-0.5"
+                        title="Sao chép tên đăng nhập"
+                      >
+                        {copiedKey === `u-${acc.username}` ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 font-mono text-slate-500">
+                    {acc.altUids}
+                  </td>
+                  <td className="py-3 px-3 font-mono font-bold text-slate-700">
+                    <div className="flex items-center gap-1.5">
+                      <span>{acc.password}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(acc.password, `p-${acc.username}`)}
+                        className="text-slate-400 hover:text-slate-600 p-0.5"
+                        title="Sao chép mật khẩu"
+                      >
+                        {copiedKey === `p-${acc.username}` ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickLogin(acc.username, acc.password)}
+                      className="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs transition-colors inline-flex items-center gap-1 shadow-xs"
+                    >
+                      <span>Vào ngay</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
