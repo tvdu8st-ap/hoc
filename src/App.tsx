@@ -15,7 +15,6 @@ import { EmergencyModal } from './components/EmergencyModal';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-
 const firebaseConfig = {
   apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A", 
   authDomain: "hinh123-fd678.firebaseapp.com",
