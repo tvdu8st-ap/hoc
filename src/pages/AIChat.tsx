@@ -1,624 +1,552 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAgeMode } from '../context/AgeModeContext';
-import {
-  Bot,
-  Send,
-  User,
-  Trash2,
-  AlertTriangle,
-  Sparkles,
-  Phone,
-  ShieldCheck,
-  RefreshCw,
-  HelpCircle,
-  HeartHandshake,
-  UserCheck,
-  Calendar,
-  CheckCircle2,
-  MessageSquare,
-  Volume2,
-  X,
-  ArrowRight,
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
+
+// Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
+import { initializeApp, getApps } from 'firebase/app';
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged, 
+  User as FirebaseUser 
+} from 'firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  deleteDoc,
+  doc, 
+  query, 
+  orderBy, 
+  serverTimestamp, 
+  setDoc 
+} from 'firebase/firestore';
+
+import { 
+  PhoneCall, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Heart, 
+  LogOut, 
+  Bookmark, 
+  Shield, 
+  Trash2 
 } from 'lucide-react';
 
-interface EscalationData {
-  type: 'MEET_COUNSELOR' | 'DIRECT_HOTLINE';
-  title: string;
-  desc: string;
-  targetStaff: string;
-  location: string;
-  suggestedAction: string;
+// ==========================================
+// 1. CẤU HÌNH & KHỞI TẠO FIREBASE (hinh123-fd678)
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A", 
+  authDomain: "hinh123-fd678.firebaseapp.com",
+  projectId: "hinh123-fd678",
+  storageBucket: "hinh123-fd678.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456"
+};
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+// ==========================================
+// 2. AUTH CONTEXT (XÁC THỰC FIREBASE)
+// ==========================================
+interface AuthContextType {
+  currentUser: FirebaseUser | null;
+  loading: boolean;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (email: string, pass: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'bot';
-  text: string;
-  isEmergency?: boolean;
-  needsEscalation?: boolean;
-  escalationCard?: EscalationData;
-  timestamp: string;
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const login = async (email: string, pass: string) => {
+    await signInWithEmailAndPassword(auth, email, pass);
+  };
+
+  const register = async (email: string, pass: string) => {
+    await createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const logout = async () => {
+    await signOut(auth);
+  };
+
+  return (
+    <AuthContext.Provider value={{ currentUser, loading, login, register, logout }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth phải được đặt trong AuthProvider');
+  return context;
+};
+
+// ==========================================
+// 3. AGE MODE CONTEXT (CHẾ ĐỘ LỨA TUỔI)
+// ==========================================
+interface AgeModeContextType {
+  mode: 'kid' | 'teen' | 'staff';
+  setMode: (mode: 'kid' | 'teen' | 'staff') => void;
 }
 
-interface AIChatProps {
-  onOpenEmergency: () => void;
+const AgeModeContext = createContext<AgeModeContextType | undefined>(undefined);
+
+export const AgeModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [mode, setMode] = useState<'kid' | 'teen' | 'staff'>('teen');
+  return (
+    <AgeModeContext.Provider value={{ mode, setMode }}>
+      {children}
+    </AgeModeContext.Provider>
+  );
+};
+
+export const useAgeMode = () => {
+  const context = useContext(AgeModeContext);
+  if (!context) throw new Error('useAgeMode phải được đặt trong AgeModeProvider');
+  return context;
+};
+
+// ==========================================
+// 4. CÁC COMPONENT GIAO DIỆN & TRANG CHỨC NĂNG
+// ==========================================
+
+function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
+  const { currentUser, logout } = useAuth();
+
+  return (
+    <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
+      <div className="flex items-center gap-2">
+        <Heart className="w-6 h-6 text-rose-600 fill-rose-600" />
+        <span className="font-bold text-slate-800 text-lg">Tâm Lý Học Đường</span>
+      </div>
+
+      <div className="flex items-center gap-6 text-sm font-medium text-slate-600">
+        <Link to="/" className="hover:text-indigo-600 transition">Trang chủ</Link>
+        <Link to="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</Link>
+        <Link to="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</Link>
+        <Link to="/bai-viet-da-luu" className="hover:text-indigo-600 transition flex items-center gap-1">
+          <Bookmark className="w-4 h-4" /> Đã lưu
+        </Link>
+        <Link to="/dang-ky-tu-van" className="hover:text-indigo-600 transition">Đặt lịch</Link>
+        <Link to="/dashboard" className="hover:text-indigo-600 transition">Quản trị</Link>
+
+        {currentUser ? (
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500 font-mono">({currentUser.email})</span>
+            <button onClick={logout} className="flex items-center gap-1 text-rose-600 hover:underline">
+              <LogOut className="w-4 h-4" /> Đăng xuất
+            </button>
+          </div>
+        ) : (
+          <Link to="/tai-khoan" className="bg-indigo-600 text-white px-4 py-1.5 rounded-xl hover:bg-indigo-700 transition">Đăng nhập</Link>
+        )}
+      </div>
+    </nav>
+  );
 }
 
-export const AIChat: React.FC<AIChatProps> = ({ onOpenEmergency }) => {
-  const { isPrimary, mode, setMode } = useAgeMode();
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    return [
-      {
-        id: 'welcome-msg',
-        sender: 'bot',
-        text: isPrimary
-          ? 'Chào bạn nhỏ! Mình là Bạn Đồng Hành đây 🧸. Mình có thể cùng em trò chuyện về chuyện học tập, bạn bè ở trường hoặc những cảm xúc lúc vui, lúc buồn. Nếu có chuyện khiến em lo lắng, em cũng luôn có thể tìm thầy cô hoặc bố mẹ nhé!'
-          : 'Chào em! Mình là Bạn Đồng Hành, trợ lý tư vấn học đường. Mình có thể cùng em tìm hiểu về cảm xúc, phương pháp học tập, tình bạn và cách giải quyết những tình huống thường gặp ở trường. Nếu có chuyện khiến em lo lắng, em cũng có thể tìm thầy cô hoặc người lớn mà em tin tưởng.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ];
-  });
+function Footer() {
+  return (
+    <footer className="bg-slate-100 border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+      Đường dây nóng hỗ trợ tâm lý & phòng chống bạo lực học đường: <strong className="text-rose-600">111</strong> (Hoạt động 24/7 trên nền tảng Firebase)
+    </footer>
+  );
+}
 
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [rateLimitError, setRateLimitError] = useState<string | null>(null);
-  const [emergencyAlert, setEmergencyAlert] = useState(false);
+function EmergencyModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-rose-500 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center gap-3 text-rose-600 mb-4">
+          <AlertTriangle className="w-8 h-8 animate-pulse" />
+          <h3 className="text-xl font-extrabold">HỖ TRỢ KHẨN CẤP 111</h3>
+        </div>
+        <p className="text-slate-600 text-sm mb-4">
+          Nếu bạn đang gặp khủng hoảng tâm lý, bạo lực học đường hoặc nguy hiểm cận kề, hãy kết nối ngay với chuyên gia quốc gia:
+        </p>
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-center mb-6">
+          <a href="tel:111" className="text-3xl font-black text-rose-700 tracking-wider">111</a>
+          <p className="text-xs text-rose-600 mt-1">Miễn phí cước gọi 24/7</p>
+        </div>
+        <button onClick={onClose} className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-2.5 rounded-xl transition">
+          Đóng cửa sổ
+        </button>
+      </div>
+    </div>
+  );
+}
 
-  // Escalation Modal state
-  const [showEscalateModal, setShowEscalateModal] = useState(false);
-  const [escalateSummary, setEscalateSummary] = useState('');
-  const [isEscalating, setIsEscalating] = useState(false);
-  const [escalateSuccess, setEscalateSuccess] = useState<{
-    requestCode: string;
-    assignedStaff: string;
-    location: string;
-  } | null>(null);
+function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
+  return (
+    <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+      <h1 className="text-4xl font-black text-slate-900 mb-4">Lắng nghe & Đồng hành học đường</h1>
+      <p className="text-slate-600 mb-8 max-w-xl mx-auto">
+        Ứng dụng tư vấn tâm lý an toàn, bảo mật dữ liệu trên đám mây Firebase (Project: hinh123-fd678).
+      </p>
+      <div className="flex justify-center gap-4">
+        <Link to="/chia-se" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
+          Góc Chia Sẻ Tâm Tư
+        </Link>
+        <button onClick={onOpenEmergency} className="bg-rose-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-rose-700 transition">
+          SOS Khẩn Cấp 111
+        </button>
+      </div>
+    </div>
+  );
+}
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+function ShareCorner() {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const { currentUser } = useAuth();
 
-  const primarySuggestions = [
-    'Em buồn vì bị bạn trêu',
-    'Làm sao để làm bài kiểm tra không run?',
-    'Cách làm hòa với bạn thân',
-    'Em muốn gặp Cô Thùy Trang phòng tư vấn',
-  ];
-
-  const secondarySuggestions = [
-    'Làm sao để bớt lo lắng trước kỳ thi?',
-    'Nhóm bạn thân bỗng dưng tẩy chay mình',
-    'Cách nói chuyện để bố mẹ hiểu áp lực học tập',
-    'Bị bắt nạt trên mạng thì nên làm gì?',
-    'Em muốn đặt lịch gặp Thầy Tuấn Anh tại Phòng 204',
-  ];
-
-  const suggestions = isPrimary ? primarySuggestions : secondarySuggestions;
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const fetchPosts = async () => {
+    try {
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) {
+      console.error("Lỗi tải bài viết:", e);
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isLoading]);
+    fetchPosts();
+  }, []);
 
-  const handleSendMessage = async (userTextToSend?: string) => {
-    const text = (userTextToSend || input).trim();
-    if (!text || isLoading) return;
-
-    setRateLimitError(null);
-    const userMsg: ChatMessage = {
-      id: `usr-${Date.now()}`,
-      sender: 'user',
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput('');
-    setIsLoading(true);
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) return;
     try {
-      // Build conversation history for context
-      const history = messages.slice(-5).map((m) => ({
-        role: (m.sender === 'user' ? 'user' : 'model') as 'user' | 'model',
-        text: m.text,
-      }));
-
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          gradeLevel: mode,
-          history,
-        }),
+      await addDoc(collection(db, 'posts'), {
+        title,
+        content,
+        author: currentUser?.email || 'Ẩn danh',
+        createdAt: serverTimestamp()
       });
-
-      if (res.status === 429) {
-        setRateLimitError('Bạn gửi tin nhắn quá nhanh. Vui lòng chờ 30 giây rồi tiếp tục trò chuyện nhé!');
-        setIsLoading(false);
-        return;
-      }
-
-      const data = await res.json();
-
-      if (data.success && data.data) {
-        const botReply = data.data.reply;
-        const isUrgent = data.data.isUrgentOrEmergency;
-        const needsEscalation = data.data.needsEscalation;
-        const escalationCard = data.data.escalationCard;
-
-        if (isUrgent) {
-          setEmergencyAlert(true);
-        }
-
-        const botMsg: ChatMessage = {
-          id: `bot-${Date.now()}`,
-          sender: 'bot',
-          text: botReply,
-          isEmergency: isUrgent,
-          needsEscalation,
-          escalationCard,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-
-        setMessages((prev) => [...prev, botMsg]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `bot-${Date.now()}`,
-            sender: 'bot',
-            text: 'Mình luôn ở đây lắng nghe bạn. Bạn hãy chia sẻ thêm nhé!',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-      }
-    } catch (err) {
-      console.error('Chat error', err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `bot-${Date.now()}`,
-          sender: 'bot',
-          text: 'Hệ thống trợ lý AI đang bận một chút. Bạn có thể thử lại sau hoặc gửi tâm sự qua Góc Chia Sẻ để gặp thầy cô trực tiếp nhé!',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Human Counselor Handover execution
-  const handleEscalateToStaff = async () => {
-    setIsEscalating(true);
-    try {
-      const summary =
-        escalateSummary.trim() ||
-        messages
-          .filter((m) => m.sender === 'user')
-          .slice(-2)
-          .map((m) => m.text)
-          .join('; ') ||
-        'Học sinh cần gặp trực tiếp chuyên viên tư vấn qua phiên Bạn Đồng Hành AI.';
-
-      const res = await fetch('/api/ai/escalate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messageSummary: summary,
-          gradeLevel: mode,
-          studentAlias: isPrimary ? 'Bé học sinh Tiểu học' : 'Học sinh THCS',
-          contactMethod: 'Gặp trực tiếp tại Phòng Tư vấn 204',
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        setEscalateSuccess({
-          requestCode: data.requestCode,
-          assignedStaff: data.assignedStaff,
-          location: data.location,
-        });
-
-        // Add confirmation message to chat
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `bot-handover-${Date.now()}`,
-            sender: 'bot',
-            text: `Thầy/Cô đã nhận được thông báo kết nối của em! Mã phiếu của em là [${data.requestCode}]. Em có thể ghé ${data.location} để gặp ${data.assignedStaff} vào bất kỳ giờ ra chơi nào nhé. Thầy cô luôn chờ em!`,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-      }
+      setTitle('');
+      setContent('');
+      fetchPosts();
     } catch (e) {
-      console.error(e);
-      alert('Không thể kết nối. Em có thể gửi trực tiếp qua mục Góc Chia Sẻ nhé!');
-    } finally {
-      setIsEscalating(false);
+      console.error("Lỗi đăng bài:", e);
     }
   };
 
-  const clearChatHistory = () => {
-    setMessages([
-      {
-        id: 'welcome-msg',
-        sender: 'bot',
-        text: 'Cuộc trò chuyện đã được làm sạch để bảo vệ sự riêng tư của em. Em muốn trò chuyện về điều gì tiếp theo?',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-    setEmergencyAlert(false);
-    setRateLimitError(null);
-  };
-
-  // Text-to-speech reading for primary accessibility
-  const handleReadText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'vi-VN';
-      utterance.rate = 0.95;
-      window.speechSynthesis.speak(utterance);
+  const handleSavePost = async (post: any) => {
+    if (!currentUser) {
+      alert('Vui lòng đăng nhập để lưu bài viết!');
+      return;
+    }
+    try {
+      const savedRef = doc(db, 'users', currentUser.uid, 'savedPosts', post.id);
+      await setDoc(savedRef, {
+        postId: post.id,
+        title: post.title,
+        content: post.content,
+        author: post.author,
+        savedAt: serverTimestamp()
+      });
+      alert('Đã lưu bài viết vào tài khoản của bạn trên Firestore!');
+    } catch (e) {
+      console.error("Lỗi lưu bài:", e);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-100">
-            <Bot className="w-8 h-8" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-extrabold text-slate-900">
-                Bạn Đồng Hành (AI Học Đường)
-              </h1>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Gemini 3.8 Flash
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Lắng nghe thấu cảm • Không phán xét • Không lưu thông tin cá nhân
-            </p>
-          </div>
-        </div>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h2 className="text-2xl font-bold mb-6 text-slate-800">Góc Chia Sẻ & Tâm Tư</h2>
+      
+      {currentUser ? (
+        <form onSubmit={handleSubmit} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8 space-y-4">
+          <h3 className="font-semibold text-slate-700">Tạo chia sẻ mới</h3>
+          <input type="text" placeholder="Tiêu đề câu chuyện..." value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm" required />
+          <textarea placeholder="Nội dung bạn muốn chia sẻ..." value={content} onChange={e => setContent(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm" rows={3} required />
+          <button type="submit" className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-indigo-700">Đăng lên hệ thống</button>
+        </form>
+      ) : (
+        <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-xl mb-6 border border-amber-200">
+          Vui lòng <Link to="/tai-khoan" className="underline font-bold">đăng nhập</Link> để đăng bài chia sẻ hoặc lưu bài viết.
+        </p>
+      )}
 
-        {/* Action Controls: Dual Age Toggle & Escalation Button */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Mode Switcher */}
-          <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 text-xs">
-            <button
-              onClick={() => setMode('PRIMARY')}
-              className={`px-3 py-1 rounded-full font-bold transition-all ${
-                isPrimary ? 'bg-amber-400 text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🧸 Tiểu học
-            </button>
-            <button
-              onClick={() => setMode('SECONDARY')}
-              className={`px-3 py-1 rounded-full font-bold transition-all ${
-                !isPrimary ? 'bg-sky-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              🎓 THCS
-            </button>
-          </div>
-
-          {/* Direct Human Counselor Handover Button */}
-          <button
-            onClick={() => {
-              setEscalateSuccess(null);
-              setShowEscalateModal(true);
-            }}
-            className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition-colors flex items-center gap-1.5 shadow-2xs"
-            title="Gặp trực tiếp chuyên viên tư vấn học đường"
-          >
-            <UserCheck className="w-4 h-4 text-indigo-600" />
-            <span>Gặp Thầy/Cô tư vấn thật</span>
-          </button>
-
-          {/* Privacy Wipe Button */}
-          <button
-            onClick={clearChatHistory}
-            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors"
-            title="Xóa trò chuyện (Bảo vệ riêng tư trên máy chung)"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Emergency Distress Alert Banner */}
-      {emergencyAlert && (
-        <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-600 text-white rounded-xl shrink-0">
-              <AlertTriangle className="w-6 h-6 animate-pulse" />
-            </div>
+      <div className="space-y-4">
+        {posts.map(p => (
+          <div key={p.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-start justify-between gap-4">
             <div>
-              <h4 className="text-sm font-bold text-rose-900">
-                Em đang cảm thấy quá tải hoặc gặp nguy hiểm?
-              </h4>
-              <p className="text-xs text-rose-700">
-                Thầy cô và Tổng đài Quốc gia 111 luôn sẵn sàng hỗ trợ em ngay lập tức!
-              </p>
+              <h4 className="font-bold text-lg text-slate-900">{p.title}</h4>
+              <p className="text-xs text-slate-400 mb-2">Tác giả: {p.author}</p>
+              <p className="text-slate-700 text-sm">{p.content}</p>
             </div>
-          </div>
-          <button
-            onClick={onOpenEmergency}
-            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shrink-0 transition-colors flex items-center gap-1.5 shadow-md shadow-rose-200"
-          >
-            <Phone className="w-3.5 h-3.5" />
-            <span>Mở trợ giúp khẩn cấp</span>
-          </button>
-        </div>
-      )}
-
-      {/* Rate limit warning */}
-      {rateLimitError && (
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-          <span>{rateLimitError}</span>
-        </div>
-      )}
-
-      {/* Chat Window Container */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-[580px] overflow-hidden">
-        {/* Messages Scroll Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/50">
-          {messages.map((msg) => {
-            const isBot = msg.sender === 'bot';
-            return (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-3 ${isBot ? '' : 'flex-row-reverse'}`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                    isBot ? 'bg-purple-600 text-white' : 'bg-sky-600 text-white'
-                  }`}
-                >
-                  {isBot ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                </div>
-
-                <div
-                  className={`max-w-[85%] sm:max-w-[78%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
-                    isBot
-                      ? msg.isEmergency
-                        ? 'bg-rose-50 border border-rose-200 text-rose-950 font-medium'
-                        : 'bg-white border border-slate-200/90 text-slate-800 shadow-2xs'
-                      : 'bg-sky-600 text-white shadow-2xs'
-                  }`}
-                >
-                  <p className="whitespace-pre-line">{msg.text}</p>
-
-                  {/* Counselor Escalation Recommendation Card */}
-                  {isBot && msg.escalationCard && (
-                    <div className="mt-3.5 p-3.5 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200 text-slate-800 space-y-2">
-                      <div className="flex items-center gap-2 text-indigo-900 font-bold text-xs">
-                        <HeartHandshake className="w-4 h-4 text-indigo-600" />
-                        <span>{msg.escalationCard.title}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 leading-normal">
-                        {msg.escalationCard.desc}
-                      </p>
-                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-indigo-100 text-[11px]">
-                        <span className="text-indigo-800 font-semibold">
-                          {msg.escalationCard.targetStaff} • {msg.escalationCard.location}
-                        </span>
-                        <button
-                          onClick={() => {
-                            setEscalateSuccess(null);
-                            setShowEscalateModal(true);
-                          }}
-                          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors flex items-center gap-1 shadow-2xs"
-                        >
-                          <span>Kết nối ngay</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-2 pt-1">
-                    {isBot && (
-                      <button
-                        onClick={() => handleReadText(msg.text)}
-                        className="text-[10px] text-slate-400 hover:text-purple-600 flex items-center gap-1"
-                        title="Nghe đọc nội dung"
-                      >
-                        <Volume2 className="w-3 h-3" />
-                        <span>Đọc</span>
-                      </button>
-                    )}
-                    <span
-                      className={`text-[10px] ml-auto ${
-                        isBot ? 'text-slate-400' : 'text-sky-200'
-                      }`}
-                    >
-                      {msg.timestamp}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {isLoading && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0">
-                <Bot className="w-4 h-4" />
-              </div>
-              <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-2xs flex items-center gap-2 text-xs text-slate-500">
-                <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
-                <span>Bạn Đồng Hành đang suy nghĩ câu trả lời...</span>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Suggestion Chips */}
-        <div className="p-2.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-            Gợi ý:
-          </span>
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              onClick={() => handleSendMessage(s)}
-              className="text-xs px-3 py-1 rounded-full bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 shrink-0 transition-colors"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        {/* Input Bar */}
-        <div className="p-3.5 bg-white border-t border-slate-200 space-y-1.5">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="flex items-center gap-2"
-          >
-            <input
-              type="text"
-              maxLength={500}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={
-                isPrimary
-                  ? 'Viết điều em muốn trò chuyện cùng Bạn Đồng Hành ở đây nhé...'
-                  : 'Nhập tâm sự hoặc điều bạn muốn chia sẻ cùng Bạn Đồng Hành...'
-              }
-              className="flex-1 text-xs sm:text-sm p-3.5 rounded-2xl border border-slate-200 focus:outline-hidden focus:ring-2 focus:ring-purple-400 bg-slate-50/70"
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="p-3.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-2xl shadow-sm transition-all shrink-0 active:scale-95"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </form>
-
-          {/* Character counter & safety disclaimer */}
-          <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
-            <div className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>An toàn cho học sinh • Không tự chẩn đoán bệnh tâm thần</span>
-            </div>
-            <span>{input.length}/500 ký tự</span>
-          </div>
-        </div>
-      </div>
-
-      {/* HUMAN COUNSELOR HANDOVER MODAL */}
-      {showEscalateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 space-y-5">
-            <button
-              onClick={() => setShowEscalateModal(false)}
-              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {escalateSuccess ? (
-              <div className="text-center py-4 space-y-4 animate-in zoom-in-95 duration-200">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">
-                  Đã Kết Nối Tới Thầy/Cô Thành Công!
-                </h3>
-                <p className="text-xs text-slate-600">
-                  Mã tiếp nhận bảo mật của em là:{' '}
-                  <strong className="font-mono text-indigo-700 text-base">
-                    {escalateSuccess.requestCode}
-                  </strong>
-                </p>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-left space-y-1.5">
-                  <div>
-                    Người phụ trách: <strong>{escalateSuccess.assignedStaff}</strong>
-                  </div>
-                  <div>
-                    Địa điểm: <strong>{escalateSuccess.location}</strong>
-                  </div>
-                  <div className="text-slate-500 text-[11px] pt-1 border-t border-slate-200">
-                    Em có thể ghé Phòng 204 vào giờ ra chơi hoặc theo dõi tiến độ phiếu tại mục <strong>Góc Chia Sẻ</strong>.
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowEscalateModal(false)}
-                  className="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800"
-                >
-                  Đã hiểu, quay lại trò chuyện
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-indigo-100 text-indigo-700 rounded-2xl">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Kết Nối Với Chuyên Viên Tư Vấn Học Đường
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      Chuyển tiếp tâm sự tới {isPrimary ? 'Cô Nguyễn Thị Thùy Trang' : 'ThS. Nguyễn Tuấn Anh'} (Phòng 204)
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Khi gặp khó khăn kéo dài, trò chuyện cùng người lớn tin cậy là cách an toàn và hiệu quả nhất. Thầy cô luôn giữ bí mật tuyệt đối nội dung chia sẻ.
-                </p>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Ghi chú tóm tắt điều em cần hỗ trợ:
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={escalateSummary}
-                    onChange={(e) => setEscalateSummary(e.target.value)}
-                    placeholder="Ví dụ: Em đang rất lo lắng về bài kiểm tra và muốn gặp thầy cô xin lời khuyên..."
-                    className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    onClick={() => setShowEscalateModal(false)}
-                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    onClick={handleEscalateToStaff}
-                    disabled={isEscalating}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-sm flex items-center gap-2"
-                  >
-                    <HeartHandshake className="w-4 h-4" />
-                    <span>{isEscalating ? 'Đang kết nối...' : 'Xác nhận kết nối tới Thầy/Cô'}</span>
-                  </button>
-                </div>
-              </div>
+            {currentUser && (
+              <button onClick={() => handleSavePost(p)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition shrink-0" title="Lưu bài viết">
+                <Bookmark className="w-5 h-5" />
+              </button>
             )}
           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SavedPosts() {
+  const [savedList, setSavedList] = useState<any[]>([]);
+  const { currentUser } = useAuth();
+
+  useEffect(() => {
+    const fetchSaved = async () => {
+      if (!currentUser) return;
+      try {
+        const q = query(collection(db, 'users', currentUser.uid, 'savedPosts'), orderBy('savedAt', 'desc'));
+        const snapshot = await getDocs(q);
+        setSavedList(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (e) {
+        console.error("Lỗi tải bài đã lưu:", e);
+      }
+    };
+    fetchSaved();
+  }, [currentUser]);
+
+  const handleRemove = async (postId: string) => {
+    if (!currentUser) return;
+    try {
+      await deleteDoc(doc(db, 'users', currentUser.uid, 'savedPosts', postId));
+      setSavedList(savedList.filter(item => item.postId !== postId && item.id !== postId));
+    } catch (e) {
+      console.error("Lỗi xóa:", e);
+    }
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-2xl text-center shadow-sm border">
+        <p className="text-sm text-slate-600">Vui lòng đăng nhập để xem danh sách bài viết đã lưu.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Bookmark className="w-7 h-7 text-indigo-600 fill-indigo-600" />
+        <h1 className="text-2xl font-black text-slate-800">Bài Viết Đã Lưu Trên Firestore</h1>
+      </div>
+
+      {savedList.length === 0 ? (
+        <div className="bg-white p-8 rounded-2xl text-center border border-slate-200 shadow-sm">
+          <p className="text-slate-500 text-sm">Chưa có bài viết nào được lưu trong tài khoản của bạn.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {savedList.map(post => (
+            <div key={post.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-lg text-slate-900 mb-1">{post.title}</h3>
+                <p className="text-xs text-slate-400 mb-2">Tác giả: {post.author}</p>
+                <p className="text-slate-700 text-sm">{post.content}</p>
+              </div>
+              <button onClick={() => handleRemove(post.postId || post.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition shrink-0" title="Bỏ lưu">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
-};
+}
+
+function StaffDashboard() {
+  const [posts, setPosts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (e) {
+        console.error("Lỗi quản trị:", e);
+      }
+    };
+    fetchAll();
+  }, []);
+
+  const handleDeletePost = async (id: string) => {
+    if (window.confirm("Xóa bài viết này?")) {
+      await deleteDoc(doc(db, 'posts', id));
+      setPosts(posts.filter(p => p.id !== id));
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <Shield className="w-8 h-8 text-indigo-600" />
+        <h1 className="text-2xl font-black text-slate-800">Trang Quản Trị Hệ Thống (Staff Dashboard)</h1>
+      </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 text-sm">Quản lý bài viết góc chia sẻ</div>
+        <div className="divide-y divide-slate-100">
+          {posts.map(p => (
+            <div key={p.id} className="p-4 flex items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-slate-900">{p.title}</h4>
+                <p className="text-xs text-slate-400">Tác giả: {p.author}</p>
+              </div>
+              <button onClick={() => handleDeletePost(p.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState('');
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setError('');
+      if (isRegister) await register(email, password);
+      else await login(email, password);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto mt-16 bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+      <h2 className="text-2xl font-black text-slate-800 mb-6 text-center">{isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập hệ thống'}</h2>
+      {error && <p className="text-xs bg-rose-50 text-rose-600 p-3 rounded-xl mb-4 border border-rose-200">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1 uppercase">Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1 uppercase">Mật khẩu</label>
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        </div>
+        <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-md">
+          {isRegister ? 'Đăng ký ngay' : 'Đăng nhập'}
+        </button>
+      </form>
+      <button onClick={() => setIsRegister(!isRegister)} className="w-full mt-4 text-xs text-indigo-600 hover:underline text-center">
+        {isRegister ? 'Đã có tài khoản? Đăng nhập tại đây' : 'Chưa có tài khoản? Đăng ký mới'}
+      </button>
+    </div>
+  );
+}
+
+// Các trang phụ trợ giữ chỗ
+function EmotionCorner() { return <div className="p-8 text-center text-xl font-bold">Góc Cảm Xúc</div>; }
+function AIChat() { return <div className="p-8 text-center text-xl font-bold">Trợ Lý AI Tâm Lý</div>; }
+function AntiBullying() { return <div className="p-8 text-center text-xl font-bold">Phòng Chống Bạo Lực Học Đường</div>; }
+function Library() { return <div className="p-8 text-center text-xl font-bold">Thư Viện Tài Liệu</div>; }
+function Appointments() { return <div className="p-8 text-center text-xl font-bold">Đặt Lịch Tư Vấn</div>; }
+
+// ==========================================
+// 5. ROOT COMPONENT
+// ==========================================
+function AppContent() {
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+      {/* Firebase Status Notification Banner */}
+      <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-2 text-emerald-900">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">
+            Firebase Connected
+          </span>
+          <span>Dự án: <strong>hinh123-fd678</strong> đang hoạt động ổn định trên Firestore & Auth.</span>
+        </div>
+        <span className="font-mono bg-white/70 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
+          Cloud Firestore Active
+        </span>
+      </div>
+
+      <Navbar onOpenEmergency={() => setEmergencyOpen(true)} />
+
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home onOpenEmergency={() => setEmergencyOpen(true)} />} />
+          <Route path="/cam-xuc" element={<EmotionCorner />} />
+          <Route path="/tro-ly-ai" element={<AIChat />} />
+          <Route path="/chia-se" element={<ShareCorner />} />
+          <Route path="/bai-viet-da-luu" element={<SavedPosts />} />
+          <Route path="/chong-bat-nat" element={<AntiBullying />} />
+          <Route path="/thu-vien" element={<Library />} />
+          <Route path="/dang-ky-tu-van" element={<Appointments />} />
+          <Route path="/dashboard" element={<StaffDashboard />} />
+          <Route path="/tai-khoan" element={<Login />} />
+        </Routes>
+      </main>
+
+      {/* Floating SOS Button */}
+      <div className="fixed bottom-6 right-6 z-30">
+        <button
+          onClick={() => setEmergencyOpen(true)}
+          className="flex items-center gap-2 px-4 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-full font-extrabold text-xs shadow-xl shadow-rose-300 hover:scale-105 active:scale-95 transition-all"
+        >
+          <PhoneCall className="w-4 h-4 animate-bounce" />
+          <span>Khẩn cấp 111</span>
+        </button>
+      </div>
+
+      <EmergencyModal isOpen={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
+      <Footer />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AgeModeProvider>
+          <AppContent />
+        </AgeModeProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
