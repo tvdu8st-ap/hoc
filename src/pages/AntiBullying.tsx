@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, PhoneCall, CheckCircle2, Lock, HelpCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Shield, AlertTriangle, PhoneCall, CheckCircle2, Lock } from 'lucide-react';
+import { useAuth } from '../App'; // Hoặc đường dẫn tới AuthContext của bạn
 import { db } from '../App';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
