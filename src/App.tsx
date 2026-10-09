@@ -37,7 +37,12 @@ import {
   LogOut, 
   Bookmark, 
   Shield, 
-  Trash2 
+  Trash2,
+  Sparkles,
+  Calendar as CalendarIcon,
+  BookOpen,
+  Smile,
+  MessageSquare
 } from 'lucide-react';
 
 // ==========================================
@@ -142,13 +147,16 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
     <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
       <div className="flex items-center gap-2">
         <Heart className="w-6 h-6 text-rose-600 fill-rose-600" />
-        <span className="font-bold text-slate-800 text-lg">Tâm Lý Học Đường</span>
+        <Link to="/" className="font-bold text-slate-800 text-lg hover:text-indigo-600 transition">Tâm Lý Học Đường</Link>
       </div>
 
-      <div className="flex items-center gap-6 text-sm font-medium text-slate-600">
+      <div className="flex items-center gap-5 text-sm font-medium text-slate-600">
         <Link to="/" className="hover:text-indigo-600 transition">Trang chủ</Link>
         <Link to="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</Link>
+        <Link to="/tro-ly-ai" className="hover:text-indigo-600 transition">Trợ lý AI</Link>
         <Link to="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</Link>
+        <Link to="/chong-bat-nat" className="hover:text-indigo-600 transition">Chống bắt nạt</Link>
+        <Link to="/thu-vien" className="hover:text-indigo-600 transition">Thư viện</Link>
         <Link to="/bai-viet-da-luu" className="hover:text-indigo-600 transition flex items-center gap-1">
           <Bookmark className="w-4 h-4" /> Đã lưu
         </Link>
@@ -156,7 +164,7 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
         <Link to="/dashboard" className="hover:text-indigo-600 transition">Quản trị</Link>
 
         {currentUser ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
             <span className="text-xs text-slate-500 font-mono">({currentUser.email})</span>
             <button onClick={logout} className="flex items-center gap-1 text-rose-600 hover:underline">
               <LogOut className="w-4 h-4" /> Đăng xuất
@@ -202,6 +210,10 @@ function EmergencyModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   );
 }
 
+// ==========================================
+// CÁC TRANG CHỨC NĂNG CHI TIẾT
+// ==========================================
+
 function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
   return (
     <div className="max-w-4xl mx-auto px-6 py-16 text-center">
@@ -213,10 +225,98 @@ function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
         <Link to="/chia-se" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
           Góc Chia Sẻ Tâm Tư
         </Link>
+        <Link to="/tro-ly-ai" className="bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-emerald-700 transition">
+          Trò Chuyện Cùng Trợ Lý AI
+        </Link>
         <button onClick={onOpenEmergency} className="bg-rose-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-rose-700 transition">
           SOS Khẩn Cấp 111
         </button>
       </div>
+    </div>
+  );
+}
+
+function EmotionCorner() {
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
+  const emotions = [
+    { name: 'Vui vẻ', emoji: '😊', desc: 'Tuyệt vời! Hãy lan tỏa năng lượng tích cực này nhé.' },
+    { name: 'Bình thường', emoji: '😐', desc: 'Một ngày nhẹ nhàng và ổn định.' },
+    { name: 'Buồn bã', emoji: '😢', desc: 'Không sao cả, ai cũng có lúc buồn. Hãy nghỉ ngơi nhé.' },
+    { name: 'Căng thẳng', emoji: '🤯', desc: 'Hít thở thật sâu nào, mọi áp lực rồi sẽ qua.' },
+    { name: 'Tức giận', emoji: '😡', desc: 'Hãy uống một ngụm nước mát và thả lỏng cơ thể.' },
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8 text-center">
+      <h2 className="text-2xl font-black text-slate-800 mb-2">Góc Cảm Xúc Hôm Nay</h2>
+      <p className="text-slate-500 text-sm mb-8">Hôm nay cảm xúc của bạn thế nào? Hãy chọn biểu tượng phù hợp nhé.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
+        {emotions.map(e => (
+          <button 
+            key={e.name}
+            onClick={() => setSelectedEmotion(e.desc)}
+            className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-indigo-500 hover:shadow-md transition flex flex-col items-center gap-2"
+          >
+            <span className="text-4xl">{e.emoji}</span>
+            <span className="font-bold text-sm text-slate-700">{e.name}</span>
+          </button>
+        ))}
+      </div>
+      {selectedEmotion && (
+        <div className="p-4 bg-indigo-50 border border-indigo-200 text-indigo-900 rounded-2xl text-sm font-medium animate-in fade-in">
+          💡 Lời khuyên cho bạn: {selectedEmotion}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AIChat({ onOpenEmergency }: { onOpenEmergency: () => void }) {
+  const [messages, setMessages] = useState<any[]>([
+    { text: "Xin chào! Mình là trợ lý AI tâm lý học đường. Bạn đang gặp căng thẳng hay chuyện buồn nào cần chia sẻ không?", sender: 'ai' }
+  ]);
+  const [input, setInput] = useState('');
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const userText = input;
+    setMessages(prev => [...prev, { text: userText, sender: 'user' }]);
+    setInput('');
+    setTimeout(() => {
+      setMessages(prev => [...prev, { text: "Mình hiểu cảm giác của bạn. Đừng lo lắng quá, hãy hít thở thật sâu và nhớ rằng luôn có thầy cô và chuyên gia sẵn sàng đồng hành cùng bạn nhé!", sender: 'ai' }]);
+    }, 800);
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col h-[calc(100vh-140px)]">
+      <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-100 p-2.5 rounded-xl text-indigo-600"><Sparkles className="w-6 h-6" /></div>
+          <div>
+            <h1 className="text-xl font-black text-slate-800">Trợ Lý AI Lắng Nghe</h1>
+            <p className="text-xs text-slate-500">Trò chuyện an toàn, bảo mật 24/7</p>
+          </div>
+        </div>
+        <button onClick={onOpenEmergency} className="px-3 py-2 bg-rose-50 text-rose-700 text-xs font-bold rounded-xl border border-rose-200">
+          Khẩn cấp 111
+        </button>
+      </div>
+
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 overflow-y-auto space-y-4 mb-4">
+        {messages.map((m, idx) => (
+          <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[75%] p-3.5 rounded-2xl text-sm ${m.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800 border'}`}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={handleSend} className="flex gap-2 bg-white p-2 rounded-2xl border shadow-sm">
+        <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder="Nhập tâm sự của bạn..." className="flex-1 px-4 py-2 text-sm outline-none" />
+        <button type="submit" className="bg-indigo-600 text-white px-5 py-2 rounded-xl text-sm font-bold">Gửi</button>
+      </form>
     </div>
   );
 }
@@ -233,82 +333,54 @@ function ShareCorner() {
       const snapshot = await getDocs(q);
       setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) {
-      console.error("Lỗi tải bài viết:", e);
+      console.error(e);
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  useEffect(() => { fetchPosts(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
     try {
       await addDoc(collection(db, 'posts'), {
-        title,
-        content,
-        author: currentUser?.email || 'Ẩn danh',
-        createdAt: serverTimestamp()
+        title, content, author: currentUser?.email || 'Ẩn danh', createdAt: serverTimestamp()
       });
-      setTitle('');
-      setContent('');
-      fetchPosts();
-    } catch (e) {
-      console.error("Lỗi đăng bài:", e);
-    }
+      setTitle(''); setContent(''); fetchPosts();
+    } catch (e) { console.error(e); }
   };
 
-  const handleSavePost = async (post: any) => {
-    if (!currentUser) {
-      alert('Vui lòng đăng nhập để lưu bài viết!');
-      return;
-    }
+  const handleSavePost = async (p: any) => {
+    if (!currentUser) { alert('Vui lòng đăng nhập để lưu bài!'); return; }
     try {
-      const savedRef = doc(db, 'users', currentUser.uid, 'savedPosts', post.id);
-      await setDoc(savedRef, {
-        postId: post.id,
-        title: post.title,
-        content: post.content,
-        author: post.author,
-        savedAt: serverTimestamp()
+      await setDoc(doc(db, 'users', currentUser.uid, 'savedPosts', p.id), {
+        postId: p.id, title: p.title, content: p.content, author: p.author, savedAt: serverTimestamp()
       });
-      alert('Đã lưu bài viết vào tài khoản của bạn trên Firestore!');
-    } catch (e) {
-      console.error("Lỗi lưu bài:", e);
-    }
+      alert('Đã lưu bài viết thành công!');
+    } catch (e) { console.error(e); }
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h2 className="text-2xl font-bold mb-6 text-slate-800">Góc Chia Sẻ & Tâm Tư</h2>
-      
       {currentUser ? (
-        <form onSubmit={handleSubmit} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8 space-y-4">
-          <h3 className="font-semibold text-slate-700">Tạo chia sẻ mới</h3>
+        <form onSubmit={handleSubmit} className="bg-white p-5 rounded-2xl shadow-sm border mb-8 space-y-4">
           <input type="text" placeholder="Tiêu đề câu chuyện..." value={title} onChange={e => setTitle(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm" required />
-          <textarea placeholder="Nội dung bạn muốn chia sẻ..." value={content} onChange={e => setContent(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm" rows={3} required />
-          <button type="submit" className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-indigo-700">Đăng lên hệ thống</button>
+          <textarea placeholder="Nội dung chia sẻ..." value={content} onChange={e => setContent(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm" rows={3} required />
+          <button type="submit" className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Đăng lên hệ thống</button>
         </form>
       ) : (
-        <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-xl mb-6 border border-amber-200">
-          Vui lòng <Link to="/tai-khoan" className="underline font-bold">đăng nhập</Link> để đăng bài chia sẻ hoặc lưu bài viết.
-        </p>
+        <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-xl mb-6 border">Vui lòng <Link to="/tai-khoan" className="underline font-bold">đăng nhập</Link> để đăng bài.</p>
       )}
-
       <div className="space-y-4">
         {posts.map(p => (
-          <div key={p.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-start justify-between gap-4">
+          <div key={p.id} className="bg-white p-5 rounded-2xl shadow-sm border flex justify-between gap-4">
             <div>
               <h4 className="font-bold text-lg text-slate-900">{p.title}</h4>
               <p className="text-xs text-slate-400 mb-2">Tác giả: {p.author}</p>
               <p className="text-slate-700 text-sm">{p.content}</p>
             </div>
-            {currentUser && (
-              <button onClick={() => handleSavePost(p)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition shrink-0" title="Lưu bài viết">
-                <Bookmark className="w-5 h-5" />
-              </button>
-            )}
+            {currentUser && <button onClick={() => handleSavePost(p)} className="text-indigo-600 p-2"><Bookmark className="w-5 h-5" /></button>}
           </div>
         ))}
       </div>
@@ -321,60 +393,23 @@ function SavedPosts() {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const fetchSaved = async () => {
-      if (!currentUser) return;
-      try {
-        const q = query(collection(db, 'users', currentUser.uid, 'savedPosts'), orderBy('savedAt', 'desc'));
-        const snapshot = await getDocs(q);
-        setSavedList(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-      } catch (e) {
-        console.error("Lỗi tải bài đã lưu:", e);
-      }
-    };
-    fetchSaved();
+    if (!currentUser) return;
+    getDocs(query(collection(db, 'users', currentUser.uid, 'savedPosts'), orderBy('savedAt', 'desc')))
+      .then(snap => setSavedList(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(e => console.error(e));
   }, [currentUser]);
 
-  const handleRemove = async (postId: string) => {
-    if (!currentUser) return;
-    try {
-      await deleteDoc(doc(db, 'users', currentUser.uid, 'savedPosts', postId));
-      setSavedList(savedList.filter(item => item.postId !== postId && item.id !== postId));
-    } catch (e) {
-      console.error("Lỗi xóa:", e);
-    }
-  };
-
-  if (!currentUser) {
-    return (
-      <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-2xl text-center shadow-sm border">
-        <p className="text-sm text-slate-600">Vui lòng đăng nhập để xem danh sách bài viết đã lưu.</p>
-      </div>
-    );
-  }
+  if (!currentUser) return <div className="p-12 text-center text-slate-600">Vui lòng đăng nhập để xem bài viết đã lưu.</div>;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Bookmark className="w-7 h-7 text-indigo-600 fill-indigo-600" />
-        <h1 className="text-2xl font-black text-slate-800">Bài Viết Đã Lưu Trên Firestore</h1>
-      </div>
-
-      {savedList.length === 0 ? (
-        <div className="bg-white p-8 rounded-2xl text-center border border-slate-200 shadow-sm">
-          <p className="text-slate-500 text-sm">Chưa có bài viết nào được lưu trong tài khoản của bạn.</p>
-        </div>
-      ) : (
+      <h1 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2"><Bookmark className="w-7 h-7 text-indigo-600 fill-indigo-600" /> Bài Viết Đã Lưu</h1>
+      {savedList.length === 0 ? <p className="text-slate-500">Chưa có bài viết nào được lưu.</p> : (
         <div className="space-y-4">
-          {savedList.map(post => (
-            <div key={post.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-bold text-lg text-slate-900 mb-1">{post.title}</h3>
-                <p className="text-xs text-slate-400 mb-2">Tác giả: {post.author}</p>
-                <p className="text-slate-700 text-sm">{post.content}</p>
-              </div>
-              <button onClick={() => handleRemove(post.postId || post.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition shrink-0" title="Bỏ lưu">
-                <Trash2 className="w-5 h-5" />
-              </button>
+          {savedList.map(p => (
+            <div key={p.id} className="bg-white p-5 rounded-2xl shadow-sm border flex justify-between">
+              <div><h3 className="font-bold text-lg">{p.title}</h3><p className="text-sm text-slate-700">{p.content}</p></div>
+              <button onClick={() => deleteDoc(doc(db, 'users', currentUser.uid, 'savedPosts', p.id)).then(() => setSavedList(savedList.filter(x => x.id !== p.id)))} className="text-rose-500"><Trash2 className="w-5 h-5" /></button>
             </div>
           ))}
         </div>
@@ -383,47 +418,85 @@ function SavedPosts() {
   );
 }
 
+function AntiBullying() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h2 className="text-2xl font-black text-rose-600 mb-4">Phòng Chống Bạo Lực Học Đường</h2>
+      <div className="bg-rose-50 border border-rose-200 p-6 rounded-2xl space-y-4 text-slate-800 text-sm">
+        <p className="font-bold text-rose-900">Bạo lực học đường dưới mọi hình thức (thể chất, lời nói, tinh thần, tẩy chay trên mạng) đều là vi phạm và không thể chấp nhận.</p>
+        <p>Nếu bạn hoặc bạn bè đang là nạn nhân, đừng chịu đựng một mình. Hãy tìm kiếm sự giúp đỡ ngay lập tức từ thầy cô, cha mẹ hoặc gọi đường dây nóng quốc gia <strong>111</strong>.</p>
+      </div>
+    </div>
+  );
+}
+
+function Library() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h2 className="text-2xl font-bold text-slate-800 mb-6">Thư Viện Tài Liệu & Cẩm Nang Tâm Lý</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 className="font-bold text-indigo-700 mb-2">📖 Bí quyết vượt qua căng thẳng kỳ thi</h3>
+          <p className="text-xs text-slate-600">Tổng hợp các phương pháp quản lý thời gian và giữ tinh thần thoải mái trước các kỳ thi quan trọng.</p>
+        </div>
+        <div className="bg-white p-5 rounded-2xl shadow-sm border">
+          <h3 className="font-bold text-indigo-700 mb-2">🤝 Xây dựng tình bạn đẹp & lành mạnh</h3>
+          <p className="text-xs text-slate-600">Hướng dẫn kỹ năng giao tiếp, thấu hiểu và giải quyết mâu thuẫn văn minh giữa bạn bè.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Appointments() {
+  const { currentUser } = useAuth();
+  const [name, setName] = useState('');
+  const [date, setDate] = useState('');
+  const [note, setNote] = useState('');
+
+  const handleBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) { alert('Vui lòng đăng nhập!'); return; }
+    try {
+      await addDoc(collection(db, 'appointments'), {
+        userId: currentUser.uid, name, date, note, status: 'Chờ xác nhận', createdAt: serverTimestamp()
+      });
+      alert('Đặt lịch tư vấn thành công!'); setName(''); setDate(''); setNote('');
+    } catch (e) { console.error(e); }
+  };
+
+  return (
+    <div className="max-w-xl mx-auto px-4 py-8 bg-white rounded-2xl shadow-sm border mt-8">
+      <h2 className="text-2xl font-bold text-slate-800 mb-4">Đặt Lịch Gặp Chuyên Gia Tâm Lý</h2>
+      <form onSubmit={handleBook} className="space-y-4">
+        <input type="text" placeholder="Họ và tên..." value={name} onChange={e => setName(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        <textarea placeholder="Nội dung cần tư vấn..." value={note} onChange={e => setNote(e.target.value)} className="w-full p-3 border rounded-xl text-sm" rows={3} />
+        <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl">Xác nhận đặt lịch</button>
+      </form>
+    </div>
+  );
+}
+
 function StaffDashboard() {
   const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
-        const snapshot = await getDocs(q);
-        setPosts(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-      } catch (e) {
-        console.error("Lỗi quản trị:", e);
-      }
-    };
-    fetchAll();
+    getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc')))
+      .then(snap => setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
+      .catch(e => console.error(e));
   }, []);
-
-  const handleDeletePost = async (id: string) => {
-    if (window.confirm("Xóa bài viết này?")) {
-      await deleteDoc(doc(db, 'posts', id));
-      setPosts(posts.filter(p => p.id !== id));
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Shield className="w-8 h-8 text-indigo-600" />
-        <h1 className="text-2xl font-black text-slate-800">Trang Quản Trị Hệ Thống (Staff Dashboard)</h1>
-      </div>
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 bg-slate-50 border-b border-slate-200 font-bold text-slate-700 text-sm">Quản lý bài viết góc chia sẻ</div>
-        <div className="divide-y divide-slate-100">
+      <h1 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2"><Shield className="w-7 h-7 text-indigo-600" /> Trang Quản Trị Hệ Thống</h1>
+      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+        <div className="p-4 bg-slate-50 border-b font-bold text-sm">Quản lý bài viết góc chia sẻ</div>
+        <div className="divide-y">
           {posts.map(p => (
-            <div key={p.id} className="p-4 flex items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-slate-900">{p.title}</h4>
-                <p className="text-xs text-slate-400">Tác giả: {p.author}</p>
-              </div>
-              <button onClick={() => handleDeletePost(p.id)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition">
-                <Trash2 className="w-5 h-5" />
-              </button>
+            <div key={p.id} className="p-4 flex justify-between items-center">
+              <div><h4 className="font-bold">{p.title}</h4><p className="text-xs text-slate-400">Tác giả: {p.author}</p></div>
+              <button onClick={() => deleteDoc(doc(db, 'posts', p.id)).then(() => setPosts(posts.filter(x => x.id !== p.id)))} className="text-rose-500"><Trash2 className="w-5 h-5" /></button>
             </div>
           ))}
         </div>
@@ -447,51 +520,33 @@ function Login() {
       if (isRegister) await register(email, password);
       else await login(email, password);
       navigate('/');
-    } catch (err: any) {
-      setError(err.message);
-    }
+    } catch (err: any) { setError(err.message); }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
+    <div className="max-w-md mx-auto mt-16 bg-white p-8 rounded-2xl shadow-xl border">
       <h2 className="text-2xl font-black text-slate-800 mb-6 text-center">{isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập hệ thống'}</h2>
       {error && <p className="text-xs bg-rose-50 text-rose-600 p-3 rounded-xl mb-4 border border-rose-200">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold text-slate-600 mb-1 uppercase">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-600 mb-1 uppercase">Mật khẩu</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
-        </div>
-        <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition shadow-md">
-          {isRegister ? 'Đăng ký ngay' : 'Đăng nhập'}
-        </button>
+        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        <input type="password" placeholder="Mật khẩu" value={password} onChange={e => setPassword(e.target.value)} className="w-full p-3 border rounded-xl text-sm" required />
+        <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl">{isRegister ? 'Đăng ký ngay' : 'Đăng nhập'}</button>
       </form>
       <button onClick={() => setIsRegister(!isRegister)} className="w-full mt-4 text-xs text-indigo-600 hover:underline text-center">
-        {isRegister ? 'Đã có tài khoản? Đăng nhập tại đây' : 'Chưa có tài khoản? Đăng ký mới'}
+        {isRegister ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký mới'}
       </button>
     </div>
   );
 }
 
-// Các trang phụ trợ giữ chỗ
-function EmotionCorner() { return <div className="p-8 text-center text-xl font-bold">Góc Cảm Xúc</div>; }
-function AIChat() { return <div className="p-8 text-center text-xl font-bold">Trợ Lý AI Tâm Lý</div>; }
-function AntiBullying() { return <div className="p-8 text-center text-xl font-bold">Phòng Chống Bạo Lực Học Đường</div>; }
-function Library() { return <div className="p-8 text-center text-xl font-bold">Thư Viện Tài Liệu</div>; }
-function Appointments() { return <div className="p-8 text-center text-xl font-bold">Đặt Lịch Tư Vấn</div>; }
-
 // ==========================================
-// 5. ROOT COMPONENT
+// 5. ROOT APP CONTENT
 // ==========================================
 function AppContent() {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
-      {/* Firebase Status Notification Banner */}
       <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-2 text-emerald-900">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -500,9 +555,6 @@ function AppContent() {
           </span>
           <span>Dự án: <strong>hinh123-fd678</strong> đang hoạt động ổn định trên Firestore & Auth.</span>
         </div>
-        <span className="font-mono bg-white/70 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
-          Cloud Firestore Active
-        </span>
       </div>
 
       <Navbar onOpenEmergency={() => setEmergencyOpen(true)} />
@@ -511,7 +563,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home onOpenEmergency={() => setEmergencyOpen(true)} />} />
           <Route path="/cam-xuc" element={<EmotionCorner />} />
-          <Route path="/tro-ly-ai" element={<AIChat />} />
+          <Route path="/tro-ly-ai" element={<AIChat onOpenEmergency={() => setEmergencyOpen(true)} />} />
           <Route path="/chia-se" element={<ShareCorner />} />
           <Route path="/bai-viet-da-luu" element={<SavedPosts />} />
           <Route path="/chong-bat-nat" element={<AntiBullying />} />
@@ -522,7 +574,6 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Floating SOS Button */}
       <div className="fixed bottom-6 right-6 z-30">
         <button
           onClick={() => setEmergencyOpen(true)}
