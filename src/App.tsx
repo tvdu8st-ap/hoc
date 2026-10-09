@@ -1,10 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
 
 // Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
 import { initializeApp, getApps } from 'firebase/app';
@@ -37,9 +32,7 @@ import {
   LogOut, 
   Bookmark, 
   Shield, 
-  Trash2, 
-  FileText, 
-  Users 
+  Trash2 
 } from 'lucide-react';
 
 // ==========================================
@@ -139,7 +132,6 @@ export const useAgeMode = () => {
 
 function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
   const { currentUser, logout } = useAuth();
-  const { mode, setMode } = useAgeMode();
 
   return (
     <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
@@ -149,14 +141,15 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
       </div>
 
       <div className="flex items-center gap-6 text-sm font-medium text-slate-600">
-        <a href="/" className="hover:text-indigo-600 transition">Trang chủ</a>
-        <a href="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</a>
-        <a href="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</a>
-        <a href="/bai-viet-da-luu" className="hover:text-indigo-600 transition flex items-center gap-1">
+        {/* Đã sửa từ thẻ a href sang Link to để tránh lỗi 404 */}
+        <Link to="/" className="hover:text-indigo-600 transition">Trang chủ</Link>
+        <Link to="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</Link>
+        <Link to="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</Link>
+        <Link to="/bai-viet-da-luu" className="hover:text-indigo-600 transition flex items-center gap-1">
           <Bookmark className="w-4 h-4" /> Đã lưu
-        </a>
-        <a href="/dang-ky-tu-van" className="hover:text-indigo-600 transition">Đặt lịch</a>
-        <a href="/dashboard" className="hover:text-indigo-600 transition">Quản trị</a>
+        </Link>
+        <Link to="/dang-ky-tu-van" className="hover:text-indigo-600 transition">Đặt lịch</Link>
+        <Link to="/dashboard" className="hover:text-indigo-600 transition">Quản trị</Link>
 
         {currentUser ? (
           <div className="flex items-center gap-3">
@@ -166,7 +159,7 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
             </button>
           </div>
         ) : (
-          <a href="/tai-khoan" className="bg-indigo-600 text-white px-4 py-1.5 rounded-xl hover:bg-indigo-700 transition">Đăng nhập</a>
+          <Link to="/tai-khoan" className="bg-indigo-600 text-white px-4 py-1.5 rounded-xl hover:bg-indigo-700 transition">Đăng nhập</Link>
         )}
       </div>
     </nav>
@@ -214,9 +207,9 @@ function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
         Ứng dụng tư vấn tâm lý an toàn, bảo mật dữ liệu trên đám mây Firebase (Project: hinh123-fd678).
       </p>
       <div className="flex justify-center gap-4">
-        <a href="/chia-se" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
+        <Link to="/chia-se" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
           Góc Chia Sẻ Tâm Tư
-        </a>
+        </Link>
         <button onClick={onOpenEmergency} className="bg-rose-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-rose-700 transition">
           SOS Khẩn Cấp 111
         </button>
@@ -296,7 +289,7 @@ function ShareCorner() {
         </form>
       ) : (
         <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-xl mb-6 border border-amber-200">
-          Vui lòng <a href="/tai-khoan" className="underline font-bold">đăng nhập</a> để đăng bài chia sẻ hoặc lưu bài viết.
+          Vui lòng <Link to="/tai-khoan" className="underline font-bold">đăng nhập</Link> để đăng bài chia sẻ hoặc lưu bài viết.
         </p>
       )}
 
@@ -480,7 +473,7 @@ function Login() {
   );
 }
 
-// Các trang phụ trợ giữ chỗ nếu chưa tách file riêng
+// Các trang phụ trợ giữ chỗ
 function EmotionCorner() { return <div className="p-8 text-center text-xl font-bold">Góc Cảm Xúc</div>; }
 function AIChat() { return <div className="p-8 text-center text-xl font-bold">Trợ Lý AI Tâm Lý</div>; }
 function AntiBullying() { return <div className="p-8 text-center text-xl font-bold">Phòng Chống Bạo Lực Học Đường</div>; }
