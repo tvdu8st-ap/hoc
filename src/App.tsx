@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useNavigate, Link } from 'react-router-dom';
 
 // Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
 import { initializeApp, getApps } from 'firebase/app';
@@ -240,7 +240,6 @@ function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
   );
 }
 
-// Trang Học Tập (/hoc) đã được tích hợp đầy đủ
 function HocTap() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -594,9 +593,9 @@ function AppContent() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home onOpenEmergency={() => setEmergencyOpen(true)} />} />
-          <Route path="/hoc" element={<HocTap />} /> {/* Đã tích hợp tuyến đường /hoc chuẩn xác */}
+          <Route path="/hoc" element={<HocTap />} />
           <Route path="/cam-xuc" element={<EmotionCorner />} />
-          <Route path="/tro-ly-ai" element={<AIChat onOpenEmergency={() => setEmergencyOpen(true)} />} />
+          <ResourceRoute path="/tro-ly-ai" element={<AIChat onOpenEmergency={() => setEmergencyOpen(true)} />} />
           <Route path="/chia-se" element={<ShareCorner />} />
           <Route path="/bai-viet-da-luu" element={<SavedPosts />} />
           <Route path="/chong-bat-nat" element={<AntiBullying />} />
@@ -625,12 +624,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <AuthProvider>
         <AgeModeProvider>
           <AppContent />
         </AgeModeProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   );
 }
