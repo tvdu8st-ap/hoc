@@ -8,35 +8,35 @@ import { BrowserRouter, Routes, Route, useNavigate, Link } from 'react-router-do
 
 // Firebase SDK & Khởi tạo trực tiếp với project hinh123-fd678
 import { initializeApp, getApps } from 'firebase/app';
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  User as FirebaseUser 
+import {  
+  getAuth,  
+  signInWithEmailAndPassword,  
+  createUserWithEmailAndPassword,  
+  signOut,  
+  onAuthStateChanged,  
+  User as FirebaseUser  
 } from 'firebase/auth';
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  getDocs, 
+import {  
+  getFirestore,  
+  collection,  
+  addDoc,  
+  getDocs,  
   deleteDoc,
-  doc, 
-  query, 
-  orderBy, 
-  serverTimestamp, 
-  setDoc 
+  doc,  
+  query,  
+  orderBy,  
+  serverTimestamp,  
+  setDoc  
 } from 'firebase/firestore';
 
-import { 
-  PhoneCall, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Heart, 
-  LogOut, 
-  Bookmark, 
-  Shield, 
+import {  
+  PhoneCall,  
+  AlertTriangle,  
+  CheckCircle2,  
+  Heart,  
+  LogOut,  
+  Bookmark,  
+  Shield,  
   Trash2,
   Sparkles,
   Calendar as CalendarIcon,
@@ -152,6 +152,7 @@ function Navbar({ onOpenEmergency }: { onOpenEmergency: () => void }) {
 
       <div className="flex items-center gap-5 text-sm font-medium text-slate-600">
         <Link to="/" className="hover:text-indigo-600 transition">Trang chủ</Link>
+        <Link to="/hoc" className="hover:text-indigo-600 transition">Học tập</Link>
         <Link to="/cam-xuc" className="hover:text-indigo-600 transition">Cảm xúc</Link>
         <Link to="/tro-ly-ai" className="hover:text-indigo-600 transition">Trợ lý AI</Link>
         <Link to="/chia-se" className="hover:text-indigo-600 transition">Góc chia sẻ</Link>
@@ -222,7 +223,10 @@ function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
         Ứng dụng tư vấn tâm lý an toàn, bảo mật dữ liệu trên đám mây Firebase (Project: hinh123-fd678).
       </p>
       <div className="flex justify-center gap-4 flex-wrap">
-        <Link to="/chia-se" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
+        <Link to="/hoc" className="bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-indigo-700 transition">
+          Học Tập & Kiến Thức
+        </Link>
+        <Link to="/chia-se" className="bg-slate-800 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-slate-900 transition">
           Góc Chia Sẻ Tâm Tư
         </Link>
         <Link to="/tro-ly-ai" className="bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-emerald-700 transition">
@@ -231,6 +235,34 @@ function Home({ onOpenEmergency }: { onOpenEmergency: () => void }) {
         <button onClick={onOpenEmergency} className="bg-rose-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-rose-700 transition">
           SOS Khẩn Cấp 111
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Trang Học Tập (/hoc) đã được tích hợp đầy đủ
+function HocTap() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h2 className="text-3xl font-black text-slate-800 mb-2">Không Gian Học Tập & Phát Triển</h2>
+      <p className="text-slate-500 text-sm mb-8">Tổng hợp các bài học, kỹ năng sống và tài nguyên học tập hữu ích dành cho học sinh.</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-4">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-lg text-slate-900 mb-2">Kỹ Năng Quản Lý Cảm Xúc</h3>
+          <p className="text-slate-600 text-sm">Học cách nhận diện cảm xúc bản thân, giữ bình tĩnh trong các tình huống áp lực học tập và thi cử.</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-lg text-slate-900 mb-2">Phương Pháp Học Tập Hiệu Quả</h3>
+          <p className="text-slate-600 text-sm">Chia sẻ các kỹ thuật ghi nhớ, sắp xếp thời gian biểu khoa học và phương pháp tự học thông minh.</p>
+        </div>
       </div>
     </div>
   );
@@ -562,6 +594,7 @@ function AppContent() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home onOpenEmergency={() => setEmergencyOpen(true)} />} />
+          <Route path="/hoc" element={<HocTap />} /> {/* Đã tích hợp tuyến đường /hoc chuẩn xác */}
           <Route path="/cam-xuc" element={<EmotionCorner />} />
           <Route path="/tro-ly-ai" element={<AIChat onOpenEmergency={() => setEmergencyOpen(true)} />} />
           <Route path="/chia-se" element={<ShareCorner />} />
