@@ -1,177 +1,250 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
+import React, { useState, useEffect } from 'react';
+import { useAgeMode } from '../context/AgeModeContext';
+import { EducationalResource, GradeLevel } from '../types';
+import {
+  BookOpen,
+  Search,
+  Clock,
+  User,
+  Tag,
+  ArrowRight,
+  X,
+  Sparkles,
+  BookMarked,
+  Filter,
+} from 'lucide-react';
 
-import React, { useState } from 'react';
-import { BookOpen, Search, Download, Bookmark, FileText, ExternalLink } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { db } from '../App';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+export const Library: React.FC = () => {
+  const { mode, isPrimary } = useAgeMode();
+  const [resources, setResources] = useState<EducationalResource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [gradeFilter, setGradeFilter] = useState<string>(mode);
+  const [readingResource, setReadingResource] = useState<EducationalResource | null>(null);
 
-export const Library = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const { currentUser } = useAuth();
-
-  const documents = [
-    {
-      id: 'doc-1',
-      title: 'Bí quyết vượt qua căng thẳng và áp lực thi cử',
-      category: 'KyNang',
-      author: 'Phòng Tư Vấn Tâm Lý Học Đường',
-      description: 'Tổng hợp các phương pháp quản lý thời gian, kỹ thuật hít thở thư giãn và giữ tinh thần minh mẫn trước các kỳ thi quan trọng.',
-      readTime: '5 phút đọc'
-    },
-    {
-      id: 'doc-2',
-      title: 'Xây dựng tình bạn đẹp & ứng xử văn minh học đường',
-      category: 'GiaoTiep',
-      author: 'Chuyên gia Nguyễn Thị Hoa',
-      description: 'Hướng dẫn kỹ năng giao tiếp, thấu hiểu sự khác biệt, đồng cảm và cách giải quyết mâu thuẫn lành mạnh giữa bạn bè.',
-      readTime: '7 phút đọc'
-    },
-    {
-      id: 'doc-3',
-      title: 'Cẩm nang nhận diện và phòng chống bắt nạt mạng (Cyberbullying)',
-      category: 'BaoLuc',
-      author: 'Ban Biên Tập Sức Khỏe Tinh Thần',
-      description: 'Nhận diện các hình thức bắt nạt trên không gian mạng và các bước bảo vệ bản thân, báo cáo vi phạm an toàn.',
-      readTime: '6 phút đọc'
-    },
-    {
-      id: 'doc-4',
-      title: 'Lắng nghe cơ thể: Tầm quan trọng của giấc ngủ đối với lứa tuổi học trò',
-      category: 'SucKhoe',
-      author: 'Y Tế Học Đường',
-      description: 'Giải thích khoa học về chu kỳ giấc ngủ và lý do vì sao học sinh cần ngủ đủ 8 tiếng mỗi ngày để phát triển tối ưu.',
-      readTime: '4 phút đọc'
-    }
+  const categories = [
+    'ALL',
+    'Áp lực học tập',
+    'Kỹ năng cảm xúc',
+    'Phòng chống bắt nạt',
+    'Dành cho phụ huynh',
   ];
 
-  const filteredDocs = documents.filter(doc => {
-    const matchesSearch = doc.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          doc.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || doc.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    fetchResources();
+  }, [gradeFilter, selectedCategory, search]);
 
-  const handleSaveToAccount = async (docItem: any) => {
-    if (!currentUser) {
-      alert('Vui lòng đăng nhập để lưu tài liệu vào tài khoản của bạn!');
-      return;
-    }
+  const fetchResources = async () => {
+    setLoading(true);
     try {
-      const savedRef = doc(db, 'users', currentUser.uid, 'savedPosts', docItem.id);
-      await setDoc(savedRef, {
-        postId: docItem.id,
-        title: docItem.title,
-        content: docItem.description,
-        author: docItem.author,
-        savedAt: serverTimestamp()
-      });
-      alert('Đã lưu tài liệu vào danh sách bài viết/tài liệu đã lưu của bạn!');
-    } catch (error) {
-      console.error("Lỗi khi lưu tài liệu:", error);
+      const query = new URLSearchParams();
+      if (gradeFilter !== 'ALL') query.append('gradeLevel', gradeFilter);
+      if (selectedCategory !== 'ALL') query.append('category', selectedCategory);
+      if (search.trim()) query.append('search', search.trim());
+
+      const res = await fetch(`/api/resources?${query.toString()}`);
+      const data = await res.json();
+      if (data.success) {
+        setResources(data.resources);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      {/* Tiêu đề trang */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
-          <BookOpen className="w-8 h-8" />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold border border-emerald-200">
+          <BookOpen className="w-4 h-4 text-emerald-600" />
+          <span>Thư Viện Kỹ Năng & Bài Học Trưởng Thành</span>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-slate-800">Thư Viện Cẩm Nang & Tài Liệu Tâm Lý</h1>
-          <p className="text-xs text-slate-500">Kho tài liệu kỹ năng sống, cẩm nang chăm sóc sức khỏe tinh thần cho học sinh</p>
-        </div>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Kho Học Liệu & Kỹ Năng Sống
+        </h1>
+        <p className="text-sm text-slate-600">
+          Bài viết, truyện tình huống và cẩm nang khoa học giúp em rèn luyện bản lĩnh, quản lý cảm xúc và xây dựng tình bạn lành mạnh.
+        </p>
       </div>
 
-      {/* Thanh tìm kiếm & Lọc danh mục */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-          <input 
+      {/* Filter and Search Bar */}
+      <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Search */}
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm kiếm cẩm nang, tài liệu..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border rounded-xl text-sm outline-none focus:bg-white focus:border-indigo-600 transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo chủ đề, tiêu đề..."
+            className="w-full text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
           />
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          <button 
-            onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        {/* Grade Level Selector */}
+        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1">
+            <Filter className="w-3.5 h-3.5" /> Lọc:
+          </span>
+          <button
+            onClick={() => setGradeFilter('ALL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+              gradeFilter === 'ALL'
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Tất cả
+            Tất cả cấp học
           </button>
-          <button 
-            onClick={() => setSelectedCategory('KyNang')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedCategory === 'KyNang' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          <button
+            onClick={() => setGradeFilter('PRIMARY')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+              gradeFilter === 'PRIMARY'
+                ? 'bg-amber-500 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Kỹ năng học tập
+            🧸 Tiểu học (1-5)
           </button>
-          <button 
-            onClick={() => setSelectedCategory('GiaoTiep')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedCategory === 'GiaoTiep' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          <button
+            onClick={() => setGradeFilter('SECONDARY')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+              gradeFilter === 'SECONDARY'
+                ? 'bg-sky-600 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Giao tiếp & Bạn bè
-          </button>
-          <button 
-            onClick={() => setSelectedCategory('BaoLuc')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedCategory === 'BaoLuc' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            Phòng chống bạo lực
+            🎓 THCS (6-9)
           </button>
         </div>
       </div>
 
-      {/* Danh sách tài liệu */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredDocs.map((item) => (
-          <div key={item.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-100">
-                  {item.readTime}
-                </span>
-                <span className="text-xs text-slate-400">{item.author}</span>
+      {/* Category Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all ${
+              selectedCategory === cat
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {cat === 'ALL' ? 'Tất cả danh mục' : cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Resource Cards Grid */}
+      {loading ? (
+        <div className="py-16 text-center text-xs text-slate-400">
+          Đang tải kho học liệu...
+        </div>
+      ) : resources.length === 0 ? (
+        <div className="py-16 text-center text-xs text-slate-500 bg-white rounded-3xl border border-dashed border-slate-200">
+          Không tìm thấy bài viết phù hợp với tiêu chí lọc.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {resources.map((res) => (
+            <div
+              key={res.id}
+              onClick={() => setReadingResource(res)}
+              className="group bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between cursor-pointer"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    {res.category}
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Clock className="w-3 h-3" />
+                    <span>{res.readTimeMinutes} phút đọc</span>
+                  </span>
+                </div>
+
+                <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-600 transition-colors line-clamp-2 leading-snug">
+                  {res.title}
+                </h3>
+
+                <p className="text-xs text-slate-500 line-clamp-3 leading-relaxed">
+                  {res.summary}
+                </p>
               </div>
-              <h3 className="font-bold text-lg text-slate-900 mb-2">{item.title}</h3>
-              <p className="text-slate-600 text-sm mb-4 leading-relaxed">{item.description}</p>
+
+              <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  <span>{res.authorName}</span>
+                </span>
+                <span className="font-bold text-emerald-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  <span>Đọc tiếp</span>
+                  <ArrowRight className="w-3 h-3" />
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Reader Modal */}
+      {readingResource && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-200 flex items-start justify-between bg-slate-50">
+              <div className="space-y-1 pr-6">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                  {readingResource.category}
+                </span>
+                <h2 className="text-xl font-bold text-slate-900 mt-1 leading-snug">
+                  {readingResource.title}
+                </h2>
+                <div className="flex items-center gap-3 text-xs text-slate-400 pt-1">
+                  <span>Tác giả: {readingResource.authorName}</span>
+                  <span>•</span>
+                  <span>Thời lượng: {readingResource.readTimeMinutes} phút đọc</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setReadingResource(null)}
+                className="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-200 transition-colors"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <button 
-                onClick={() => alert(`Đang mở tài liệu: ${item.title}`)}
-                className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 font-bold text-xs"
-              >
-                <FileText className="w-4 h-4" /> Đọc trực tuyến <ExternalLink className="w-3 h-3" />
-              </button>
+            {/* Content Body */}
+            <div className="p-6 sm:p-8 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
+              <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 italic text-slate-600 text-xs">
+                {readingResource.summary}
+              </div>
+              <div className="whitespace-pre-line space-y-3 pt-2">
+                {readingResource.content}
+              </div>
+            </div>
 
-              <button 
-                onClick={() => handleSaveToAccount(item)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 rounded-xl text-xs font-semibold transition"
-                title="Lưu vào tài khoản"
+            {/* Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center text-xs">
+              <span className="text-slate-400 text-[11px]">
+                Nguồn: Ban Tư vấn Tâm lý Học đường
+              </span>
+              <button
+                onClick={() => setReadingResource(null)}
+                className="px-5 py-2 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-colors"
               >
-                <Bookmark className="w-4 h-4" /> Lưu tài liệu
+                Đã hiểu bài học
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

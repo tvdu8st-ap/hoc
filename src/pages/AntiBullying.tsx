@@ -1,157 +1,369 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
-import { Shield, AlertTriangle, PhoneCall, CheckCircle2, Lock } from 'lucide-react';
-import { useAuth } from '../App'; // Hoặc đường dẫn tới AuthContext của bạn
-import { db } from '../App';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useAgeMode } from '../context/AgeModeContext';
+import {
+  ShieldAlert,
+  ShieldCheck,
+  AlertTriangle,
+  Send,
+  Eye,
+  CheckCircle2,
+  Phone,
+  Lock,
+  UserX,
+  MessageSquareWarning,
+  Globe,
+  Share2,
+} from 'lucide-react';
 
 interface AntiBullyingProps {
   onOpenEmergency: () => void;
 }
 
 export const AntiBullying: React.FC<AntiBullyingProps> = ({ onOpenEmergency }) => {
-  const { currentUser } = useAuth();
-  const [reportText, setReportText] = useState('');
+  const { isPrimary, mode } = useAgeMode();
+
+  // Report form state
+  const [victimType, setVictimType] = useState('Bản thân em bị');
+  const [incidentType, setIncidentType] = useState('Lăng mạ, chê bai ngoại hình hoặc xúc phạm');
+  const [location, setLocation] = useState('Hành lang lớp học hoặc giờ ra chơi');
+  const [incidentDate, setIncidentDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [safeContact, setSafeContact] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reportSuccessCode, setReportSuccessCode] = useState<string | null>(null);
 
-  const handleReportSubmit = async (e: React.FormEvent) => {
+  const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reportText.trim()) return;
+    if (!description.trim()) return;
 
-    setLoading(true);
+    setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'reports'), {
-        content: reportText,
-        author: isAnonymous ? 'Ẩn danh' : (currentUser?.email || 'Thành viên'),
-        status: 'Chờ xử lý',
-        createdAt: serverTimestamp()
+      const res = await fetch('/api/bullying', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gradeLevel: mode,
+          victimType,
+          incidentType,
+          location,
+          incidentDate,
+          description: description.trim(),
+          safeContact,
+          isAnonymous,
+        }),
       });
-      setSuccess(true);
-      setReportText('');
-      setTimeout(() => setSuccess(false), 5000);
-    } catch (error) {
-      console.error("Lỗi gửi báo cáo:", error);
-      alert('Có lỗi xảy ra khi gửi báo cáo. Vui lòng thử lại!');
+      const data = await res.json();
+      if (data.success && data.reportCode) {
+        setReportSuccessCode(data.reportCode);
+        setDescription('');
+      } else {
+        alert(data.message || 'Có lỗi xảy ra.');
+      }
+    } catch {
+      alert('Không thể kết nối đến máy chủ.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      {/* Tiêu đề trang */}
-      <div className="flex items-center gap-3">
-        <div className="bg-rose-100 p-3 rounded-2xl text-rose-600">
-          <Shield className="w-8 h-8" />
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+      {/* Header */}
+      <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-rose-50 text-rose-800 rounded-full text-xs font-bold border border-rose-200">
+          <ShieldAlert className="w-4 h-4 text-rose-600" />
+          <span>Trường Học An Toàn – Không Bạo Lực</span>
         </div>
-        <div>
-          <h1 className="text-2xl font-black text-slate-800">Phòng Chống Bạo Lực Học Đường</h1>
-          <p className="text-xs text-slate-500">Xây dựng môi trường học tập an toàn, thân thiện và không có bạo lực</p>
-        </div>
-      </div>
-
-      {/* Thông điệp cốt lõi */}
-      <div className="bg-gradient-to-r from-rose-500 to-rose-700 text-white p-6 md:p-8 rounded-3xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider">
-            <AlertTriangle className="w-4 h-4 text-amber-300" /> Thông điệp quan trọng
-          </div>
-          <h2 className="text-xl md:text-2xl font-extrabold">Bạo lực học đường dưới mọi hình thức đều không thể chấp nhận!</h2>
-          <p className="text-rose-100 text-xs md:text-sm leading-relaxed max-w-xl">
-            Dù là bạo lực thể chất, ngôn từ, tinh thần hay tẩy chay trên mạng, bạn tuyệt đối không phải chịu đựng một mình. Nhà trường luôn đứng về phía bạn.
-          </p>
-        </div>
-        <button 
-          onClick={onOpenEmergency}
-          className="bg-white text-rose-700 hover:bg-rose-50 font-black px-6 py-3.5 rounded-2xl shadow-xl transition whitespace-nowrap flex items-center gap-2 shrink-0"
-        >
-          <PhoneCall className="w-5 h-5 animate-bounce" /> Gọi Khẩn Cấp 111
-        </button>
-      </div>
-
-      {/* Nhận diện các hình thức bạo lực */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="text-2xl mb-3">💬</div>
-          <h3 className="font-bold text-slate-900 mb-1">Bạo lực tinh thần & Lời nói</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Lăng mạ, chửi bới, chế giễu ngoại hình, đặt biệt danh ác ý hoặc đe dọa gây tổn thương tâm lý.
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="text-2xl mb-3">🚫</div>
-          <h3 className="font-bold text-slate-900 mb-1">Tẩy chay & Cô lập</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Cố ý gạt bỏ một bạn học khỏi nhóm, xúi giục người khác không chơi cùng hoặc phớt lờ sự hiện diện của bạn đó.
-          </p>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <div className="text-2xl mb-3">💻</div>
-          <h3 className="font-bold text-slate-900 mb-1">Bạo lực mạng (Cyberbullying)</h3>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Nhắn tin đe dọa, tung tin đồn thất thiệt, đăng ảnh bêu xấu hoặc bình luận ác ý trên mạng xã hội.
-          </p>
-        </div>
-      </div>
-
-      {/* Biểu mẫu báo cáo ẩn danh / bảo mật */}
-      <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200">
-        <div className="flex items-center gap-2 mb-2">
-          <Lock className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-bold text-slate-800">Kênh Gửi Báo Cáo / Tâm Thư Bảo Mật An Toàn</h2>
-        </div>
-        <p className="text-xs text-slate-500 mb-6">
-          Nếu bạn chứng kiến hoặc là nạn nhân của bạo lực học đường, hãy điền thông tin bên dưới. Hệ thống sẽ chuyển tiếp trực tiếp đến ban tư vấn nhà trường một cách bảo mật.
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Phòng Chống Bắt Nạt & Bạo Lực Học Đường
+        </h1>
+        <p className="text-sm text-slate-600">
+          Mỗi học sinh đều có quyền được an toàn khi đến trường. Im lặng trước bắt nạt là dung túng cho cái xấu – Hãy lên tiếng để thầy cô bảo vệ em!
         </p>
+      </div>
 
-        {success && (
-          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-sm flex items-center gap-2 animate-in fade-in">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>Đã gửi báo cáo thành công! Nhà trường sẽ tiếp nhận và bảo vệ thông tin cho bạn.</span>
+      {/* 4 Forms of Bullying */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900">
+            4 Hình Thức Bắt Nạt Cần Nhận Biết Ngay:
+          </h2>
+          <span className="text-xs text-slate-500">Đừng để bị đánh lừa là "chỉ đùa vui"</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-5 rounded-3xl bg-white border border-rose-100 shadow-2xs space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+              👊
+            </div>
+            <h3 className="font-bold text-sm text-slate-900">1. Bắt nạt thể chất</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Đánh, xô đẩy, ngáng chân, giật cặp sách, làm hỏng đồ dùng học tập hoặc ép buộc thể lực.
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleReportSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nội dung sự việc cần báo cáo / Cần giúp đỡ</label>
-            <textarea 
-              value={reportText}
-              onChange={(e) => setReportText(e.target.value)}
-              rows={4}
-              placeholder="Mô tả ngắn gọn sự việc, thời gian, địa điểm hoặc tên lớp (nếu bạn biết)..."
-              className="w-full p-3.5 border rounded-2xl text-sm bg-slate-50 outline-none focus:bg-white focus:border-indigo-600 transition"
-              required
-            />
+          <div className="p-5 rounded-3xl bg-white border border-amber-100 shadow-2xs space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+              🗣️
+            </div>
+            <h3 className="font-bold text-sm text-slate-900">2. Bắt nạt bằng lời nói</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Đặt biệt danh xúc phạm, châm chọc ngoại hình, chế giễu gia cảnh, đe dọa hoặc tung tin thất thiệt.
+            </p>
           </div>
 
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
-              <input 
-                type="checkbox" 
-                checked={isAnonymous} 
-                onChange={(e) => setIsAnonymous(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
-              />
-              Gửi hoàn toàn ẩn danh (Bảo mật danh tính tuyệt đối)
-            </label>
+          <div className="p-5 rounded-3xl bg-white border border-purple-100 shadow-2xs space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+              🚫
+            </div>
+            <h3 className="font-bold text-sm text-slate-900">3. Cô lập xã hội</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Cố tình xúi giục cả lớp tẩy chay, không cho ngồi cùng, không cho tham gia nhóm học tập hoặc vui chơi.
+            </p>
+          </div>
 
-            <button 
-              type="submit"
-              disabled={loading || !reportText.trim()}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold px-6 py-3 rounded-xl text-sm shadow-md transition"
+          <div className="p-5 rounded-3xl bg-white border border-sky-100 shadow-2xs space-y-2">
+            <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+              💻
+            </div>
+            <h3 className="font-bold text-sm text-slate-900">4. Bắt nạt không gian mạng</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Đăng ảnh dìm hàng lên Facebook/TikTok, lập nhóm chat kín bêu rếu, gửi tin nhắn xúc phạm nặc danh.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 KHÔNG - 3 NÊN */}
+      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-10 space-y-6">
+        <div className="text-center max-w-xl mx-auto space-y-1">
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+            Bộ Quy Tắc Vàng
+          </span>
+          <h2 className="text-2xl font-extrabold text-white">
+            Quy Tắc "3 Không – 3 Nên" Khi Đối Diện Bắt Nạt
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+          {/* 3 KHÔNG */}
+          <div className="p-6 rounded-2xl bg-rose-950/40 border border-rose-800/60 space-y-3">
+            <h3 className="text-base font-bold text-rose-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs">
+                ✕
+              </span>
+              <span>3 ĐIỀU TUYỆT ĐỐI "KHÔNG":</span>
+            </h3>
+            <ul className="text-xs text-slate-300 space-y-2.5">
+              <li className="flex items-start gap-2">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>
+                  <strong>KHÔNG tự trách bản thân:</strong> Em không làm gì sai. Bắt nạt là hành vi sai trái của kẻ bắt nạt.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>
+                  <strong>KHÔNG trả thù bằng bạo lực:</strong> Đánh lại hoặc chửi bới sẽ khiến xung đột leo thang nguy hiểm.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-rose-400 font-bold">•</span>
+                <span>
+                  <strong>KHÔNG im lặng chịu đựng:</strong> Càng im lặng thì kẻ bắt nạt càng lấn tới.
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* 3 NÊN */}
+          <div className="p-6 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 space-y-3">
+            <h3 className="text-base font-bold text-emerald-300 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs">
+                ✓
+              </span>
+              <span>3 ĐIỀU EM "NÊN LÀM NGAY":</span>
+            </h3>
+            <ul className="text-xs text-slate-300 space-y-2.5">
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span>
+                  <strong>NÊN giữ bình tĩnh & rời đi:</strong> Bước nhanh tới khu vực đông người hoặc phòng giáo viên.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span>
+                  <strong>NÊN lưu lại bằng chứng:</strong> Chụp ảnh màn hình tin nhắn, ghi nhớ thời gian và người chứng kiến.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-emerald-400 font-bold">•</span>
+                <span>
+                  <strong>NÊN báo ngay cho người lớn:</strong> Gửi báo cáo bên dưới hoặc gọi 111 để được bảo vệ kịp thời.
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Incident Intake Report Form */}
+      <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200 space-y-6">
+        <div className="border-b border-slate-100 pb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 rounded-full text-xs font-bold mb-2">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>Kênh tiếp nhận sự việc khẩn cấp</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">
+            Gửi Báo Cáo Sự Việc Bắt Nạt Học Đường
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Báo cáo được chuyển thẳng tới Ban Giám Thị và Tổ Tư Vấn Học Đường để xử lý bảo mật.
+          </p>
+        </div>
+
+        {reportSuccessCode ? (
+          <div className="p-8 text-center space-y-4 bg-emerald-50 rounded-2xl border border-emerald-200 animate-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">
+              Báo Cáo Đã Được Tiếp Nhận Ưu Tiên!
+            </h3>
+            <p className="text-xs text-slate-600 max-w-md mx-auto">
+              Mã báo cáo của bạn là:{' '}
+              <strong className="font-mono text-emerald-800 text-base">{reportSuccessCode}</strong>
+              . Ban An Toàn trường học sẽ xác minh thận trọng và bảo vệ tuyệt đối danh tính của người báo cáo.
+            </p>
+            <button
+              onClick={() => setReportSuccessCode(null)}
+              className="px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800"
             >
-              {loading ? 'Đang gửi...' : 'Gửi Báo Cáo An Toàn'}
+              Gửi thêm báo cáo khác
             </button>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmitReport} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Người báo cáo là:
+                </label>
+                <select
+                  value={victimType}
+                  onChange={(e) => setVictimType(e.target.value)}
+                  className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
+                >
+                  <option value="Bản thân em bị">Bản thân em là người bị bắt nạt</option>
+                  <option value="Em chứng kiến bạn khác bị">Em chứng kiến bạn khác đang bị bắt nạt</option>
+                  <option value="Báo cáo nặc danh từ học sinh">Báo cáo nặc danh giúp bạn bè</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Hình thức sự việc xảy ra:
+                </label>
+                <select
+                  value={incidentType}
+                  onChange={(e) => setIncidentType(e.target.value)}
+                  className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
+                >
+                  <option value="Lăng mạ, chê bai ngoại hình hoặc xúc phạm">
+                    Lăng mạ, chê bai ngoại hình, châm chọc xúc phạm
+                  </option>
+                  <option value="Bạo lực thể xác, đánh đập, chặn đường">
+                    Bạo lực thể xác, đánh đập, chặn đường
+                  </option>
+                  <option value="Cô lập, ép cả lớp tẩy chay">Cô lập, ép cả lớp tẩy chay</option>
+                  <option value="Bắt nạt qua mạng, lập nhóm bêu rếu">
+                    Bắt nạt qua mạng, đăng ảnh bêu rếu
+                  </option>
+                  <option value="Tống tiền, ép nộp tiền hoặc đồ ăn">
+                    Tống tiền, trấn lột đồ dùng học tập
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Địa điểm xảy ra sự việc (Nếu biết):
+                </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Ví dụ: Cầu thang tầng 3, Căng tin trường, Nhà xe, Trên Facebook..."
+                  className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Thời gian diễn ra (Hoặc khoảng thời gian):
+                </label>
+                <input
+                  type="text"
+                  value={incidentDate}
+                  onChange={(e) => setIncidentDate(e.target.value)}
+                  placeholder="Ví dụ: Giờ ra chơi hôm qua, liên tục trong tuần này..."
+                  className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Mô tả chi tiết sự việc:
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Mô tả sự việc đã diễn ra như thế nào, ai liên quan, hậu quả ra sao để thầy cô có đầy đủ thông tin xử lý..."
+                className="w-full text-xs sm:text-sm p-3.5 rounded-2xl border border-slate-200 bg-slate-50"
+              />
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  className="w-4 h-4 accent-rose-600 rounded"
+                />
+                <span className="text-xs font-bold text-slate-800">
+                  Ẩn danh hoàn toàn (Không lưu thông tin cá nhân của em)
+                </span>
+              </label>
+
+              {!isAnonymous && (
+                <input
+                  type="text"
+                  value={safeContact}
+                  onChange={(e) => setSafeContact(e.target.value)}
+                  placeholder="Số điện thoại hoặc email an toàn..."
+                  className="text-xs p-2 rounded-xl border border-slate-300 bg-white"
+                />
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || !description.trim()}
+              className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md shadow-rose-200 transition-all flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              <span>{isSubmitting ? 'Đang gửi khẩn cấp...' : 'Gửi báo cáo sự việc này ngay'}</span>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
