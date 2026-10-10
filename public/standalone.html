@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tâm Lý Học Đường - Lắng Nghe & Đồng Hành (Firebase: hinh123-fd678)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Be Vietnam Pro"', 'sans-serif'],
+          },
+          colors: {
+            primary: '#4f46e5',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Font: Be Vietnam Pro -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDK Compatibility CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: rgba(148, 163, 184, 0.5);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50/80 via-sky-50/70 to-purple-50/80 min-h-screen flex flex-col text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+  <!-- ========================================================= -->
+  <!-- 1. THANH TRẠNG THÁI KẾT NỐI FIREBASE CỐ ĐỊNH TRÊN CÙNG   -->
+  <!-- ========================================================= -->
+  <header class="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white text-xs font-semibold py-1.5 px-4 shadow-md backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-200"></span>
+        </span>
+        <span class="bg-white/20 border border-white/30 text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-wider">
+          🔥 FIREBASE CONNECTED
+        </span>
+        <span class="text-xs">
+          Dự án: <strong class="font-extrabold underline decoration-white/40">hinh123-fd678</strong> đang hoạt động ổn định trên Firestore & Auth
+        </span>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-[11px] text-white/90">
+        <span class="bg-white/15 px-2.5 py-0.5 rounded-full font-mono">Cloud Firestore Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================= -->
+  <!-- 2. THANH ĐIỀU HƯỚNG (NAVBAR) GLASSMORPHISM                -->
+  <!-- ========================================================= -->
+  <nav class="sticky top-[31px] z-40 glass border-b border-white/60 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="javascript:void(0)" onclick="switchTab('home')" class="flex items-center gap-2.5 group">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+          <i data-lucide="heart" class="w-5 h-5 fill-white"></i>
+        </div>
+        <div>
+          <span class="text-base sm:text-lg font-black bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600 bg-clip-text text-transparent block leading-tight">
+            Tâm Lý Học Đường
+          </span>
+          <span class="text-[10px] font-medium text-slate-500 block leading-none">
+            Lắng nghe & Đồng hành cùng em
+          </span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Menu -->
+      <div class="hidden xl:flex items-center gap-1 text-xs font-semibold text-slate-600" id="desktopNav">
+        <button onclick="switchTab('home')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="home">Trang chủ</button>
+        <button onclick="switchTab('emotion')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="emotion">Cảm xúc</button>
+        <button onclick="switchTab('ai')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="ai">Trợ lý AI</button>
+        <button onclick="switchTab('share')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="share">Góc chia sẻ</button>
+        <button onclick="switchTab('bully')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="bully">Chống bắt nạt</button>
+        <button onclick="switchTab('library')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="library">Thư viện</button>
+        <button onclick="switchTab('saved')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="saved">Đã lưu</button>
+        <button onclick="switchTab('appointment')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="appointment">Đặt lịch</button>
+        <button onclick="switchTab('dashboard')" class="nav-btn px-3 py-1.5 rounded-xl transition-all" data-tab="dashboard">Quản trị</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2.5">
+        <button onclick="openModal('emergencyModal')" class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-200 hover:scale-105 active:scale-95 transition-all">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5 animate-bounce"></i>
+          <span>SOS 111</span>
+        </button>
+
+        <div id="authStatusArea">
+          <button onclick="switchTab('login')" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition-all hover:scale-105">
+            Đăng nhập
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ========================================================= -->
+  <!-- 3. NỘI DUNG CHÍNH (DYNAMIC TABS)                          -->
+  <!-- ========================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+
+    <!-- TAB 1: TRANG CHỦ & HERO SECTION -->
+    <section id="tab-home" class="tab-pane py-8 sm:py-14">
+      <div class="text-center max-w-4xl mx-auto">
+        
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-indigo-200 text-indigo-700 text-xs font-bold shadow-xs mb-6">
+          <i data-lucide="sparkles" class="w-4 h-4 text-indigo-500"></i>
+          <span>Cổng Thông Tin Hỗ Trợ Tâm Lý Học Đường 4.0 • Firebase: hinh123-fd678</span>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tight leading-tight mb-5">
+          Lắng nghe & Đồng hành <br>
+          <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+            học đường
+          </span>
+        </h1>
+
+        <p class="text-slate-600 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed mb-10">
+          Không gian an toàn, ấm áp và thấu cảm dành riêng cho học sinh. Nơi mọi lo âu về áp lực điểm số, thi cử, tình bạn và cảm xúc tuổi học trò luôn được lắng nghe và bảo mật trọn vẹn.
+        </p>
+
+        <!-- 3 NÚT CHÍNH LỚN NỔI BẬT THEO YÊU CẦU -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mb-16">
+          
+          <!-- Nút 1: Góc Chia Sẻ Tâm Tư -->
+          <button onclick="switchTab('share')" class="group p-6 rounded-3xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-white shadow-xl shadow-indigo-200 hover:shadow-2xl hover:scale-103 active:scale-98 transition-all flex flex-col items-center justify-center">
+            <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="message-square" class="w-7 h-7 text-white"></i>
+            </div>
+            <span class="text-base sm:text-lg font-black">Góc Chia Sẻ Tâm Tư</span>
+            <span class="text-xs text-indigo-100 mt-1 font-medium">Tâm sự ẩn danh, trải lòng & tìm sự đồng cảm</span>
+          </button>
+
+          <!-- Nút 2: Trò Chuyện Cùng Trợ Lý AI -->
+          <button onclick="switchTab('ai')" class="group p-6 rounded-3xl bg-gradient-to-b from-sky-500 to-cyan-600 text-white shadow-xl shadow-sky-200 hover:shadow-2xl hover:scale-103 active:scale-98 transition-all flex flex-col items-center justify-center">
+            <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="bot" class="w-7 h-7 text-white"></i>
+            </div>
+            <span class="text-base sm:text-lg font-black">Trò Chuyện Cùng Trợ Lý AI</span>
+            <span class="text-xs text-sky-100 mt-1 font-medium">Tư vấn 24/7, xoa dịu áp lực & giảm stress</span>
+          </button>
+
+          <!-- Nút 3: SOS Khẩn Cấp 111 -->
+          <button onclick="openModal('emergencyModal')" class="group p-6 rounded-3xl bg-gradient-to-b from-rose-500 to-red-600 text-white shadow-xl shadow-rose-200 hover:shadow-2xl hover:scale-103 active:scale-98 transition-all flex flex-col items-center justify-center">
+            <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <i data-lucide="phone-call" class="w-7 h-7 text-white animate-bounce"></i>
+            </div>
+            <span class="text-base sm:text-lg font-black">SOS Khẩn Cấp 111</span>
+            <span class="text-xs text-rose-100 mt-1 font-medium">Tổng đài Quốc gia Bảo vệ Trẻ em miễn phí</span>
+          </button>
+        </div>
+
+        <!-- 4 Khối chức năng nổi bật -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+          <div onclick="switchTab('emotion')" class="cursor-pointer p-5 rounded-3xl glass-card shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-3">
+              <i data-lucide="smile" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-extrabold text-slate-800 text-sm mb-1">Nhật Ký Cảm Xúc</h3>
+            <p className="text-xs text-slate-500">Điểm danh tâm trạng mỗi ngày với emoji, ghi nhật ký ẩn danh an toàn.</p>
+          </div>
+
+          <div onclick="switchTab('bully')" class="cursor-pointer p-5 rounded-3xl glass-card shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div class="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-3">
+              <i data-lucide="shield-alert" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-extrabold text-slate-800 text-sm mb-1">Chống Bắt Nạt</h3>
+            <p className="text-xs text-slate-500">Hòm thư báo cáo bạo lực học đường bảo mật 100% để thầy cô can thiệp ngay.</p>
+          </div>
+
+          <div onclick="switchTab('appointment')" class="cursor-pointer p-5 rounded-3xl glass-card shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-600 flex items-center justify-center mb-3">
+              <i data-lucide="calendar" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-extrabold text-slate-800 text-sm mb-1">Đặt Lịch Chuyên Gia</h3>
+            <p className="text-xs text-slate-500">Gặp Thầy Nguyễn Tuấn Anh hoặc Cô Nguyễn Thị Thùy Trang tại Phòng 204.</p>
+          </div>
+
+          <div onclick="switchTab('library')" class="cursor-pointer p-5 rounded-3xl glass-card shadow-md hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div class="w-10 h-10 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mb-3">
+              <i data-lucide="book-open" class="w-5 h-5"></i>
+            </div>
+            <h3 class="font-extrabold text-slate-800 text-sm mb-1">Thư Viện Kỹ Năng</h3>
+            <p className="text-xs text-slate-500">Bí quyết giải tỏa căng thẳng trước phòng thi và kỹ năng kết nối bạn bè.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: NHẬT KÝ CẢM XÚC -->
+    <section id="tab-emotion" class="tab-pane hidden max-w-4xl mx-auto py-6">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-800">Nhật Ký Cảm Xúc Mỗi Ngày</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">Lắng nghe và ôm ấp cảm xúc của bản thân hôm nay nhé!</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Form Ghi Nhận -->
+        <div class="lg:col-span-7 glass-card p-6 rounded-3xl shadow-xl">
+          <form id="emotionForm" onsubmit="handleSaveEmotion(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-2">1. Chọn cảm xúc của em:</label>
+              <div class="grid grid-cols-4 gap-2" id="emojiButtonsContainer">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">2. Chủ đề liên quan:</label>
+              <select id="emotionTopic" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-indigo-300">
+                <option value="Học tập & Thi cử">Học tập & Thi cử</option>
+                <option value="Bạn bè & Trường lớp">Bạn bè & Trường lớp</option>
+                <option value="Mối quan hệ gia đình">Mối quan hệ gia đình</option>
+                <option value="Cảm xúc cá nhân & Tự ti">Cảm xúc cá nhân & Tự ti</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">3. Viết đôi lời tâm sự của em:</label>
+              <textarea id="emotionNote" required rows="3" placeholder="Hôm nay em thấy thế nào? Có chuyện gì khiến em lo lắng hay vui vẻ không?..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer">
+                <input type="checkbox" id="emotionAnon" checked class="w-4 h-4 text-indigo-600 rounded">
+                <span>Lưu ẩn danh (Bảo mật 100%)</span>
+              </label>
+
+              <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs rounded-xl shadow-md hover:scale-105 active:scale-95 transition">
+                Lưu Nhật Ký
+              </button>
+            </div>
+            <div id="emotionAlert" class="hidden p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200"></div>
+          </form>
+        </div>
+
+        <!-- Danh Sách Đã Lưu -->
+        <div class="lg:col-span-5 glass-card p-5 rounded-3xl shadow-xl">
+          <h3 class="font-extrabold text-slate-800 text-sm mb-3">Dòng Cảm Xúc Đã Ghi Lại</h3>
+          <div id="emotionHistoryList" class="space-y-3 max-h-[380px] overflow-y-auto pr-1 custom-scroll">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: TRỢ LÝ AI TÂM LÝ HỌC ĐƯỜNG -->
+    <section id="tab-ai" class="tab-pane hidden max-w-3xl mx-auto py-6">
+      <div class="glass-card rounded-3xl p-5 shadow-xl mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-400 to-indigo-600 text-white flex items-center justify-center shadow-md">
+            <i data-lucide="bot" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+              <span>Trợ Lý AI Bạn Đồng Hành Học Đường</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            </h2>
+            <p class="text-[11px] text-slate-500">Tư vấn thấu cảm • Giải tỏa áp lực thi cử 24/7 • Hoàn toàn bảo mật</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Box -->
+      <div class="glass-card rounded-3xl shadow-xl overflow-hidden flex flex-col h-[520px]">
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 custom-scroll">
+          <!-- Tin nhắn mặc định -->
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 text-white flex items-center justify-center shrink-0">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+            </div>
+            <div class="max-w-[80%] p-3.5 rounded-2xl text-xs sm:text-sm bg-white text-slate-800 border border-slate-100 shadow-xs leading-relaxed">
+              Chào em! Thầy cô Trợ lý AI luôn sẵn sàng lắng nghe mọi nỗi niềm tuổi học trò của em. Hôm nay em có điều gì trăn trở về bài vở, bạn bè hay áp lực thi cử không?
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Prompts -->
+        <div class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center gap-2 overflow-x-auto text-[11px]">
+          <span class="text-slate-400 font-bold shrink-0">Gợi ý:</span>
+          <button onclick="sendQuickPrompt('Em đang bị áp lực thi cử và điểm số nặng nề quá...')" class="shrink-0 px-2.5 py-1 bg-white hover:bg-sky-50 border rounded-full text-slate-700">Áp lực thi cử</button>
+          <button onclick="sendQuickPrompt('Em cảm thấy bạn bè trong lớp xa lánh mình')" class="shrink-0 px-2.5 py-1 bg-white hover:bg-sky-50 border rounded-full text-slate-700">Bạn bè xa lánh</button>
+          <button onclick="sendQuickPrompt('Hướng dẫn em bài tập thở 4-7-8 để bình tĩnh lại')" class="shrink-0 px-2.5 py-1 bg-white hover:bg-sky-50 border rounded-full text-slate-700">Kỹ thuật thở 4-7-8</button>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2">
+          <input type="text" id="chatInput" placeholder="Tâm sự cùng trợ lý AI..." onkeydown="if(event.key==='Enter') sendChatMessage()" class="flex-1 text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-300">
+          <button onclick="sendChatMessage()" class="p-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:scale-105 active:scale-95 transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: GÓC CHIA SẺ TÂM TƯ -->
+    <section id="tab-share" class="tab-pane hidden max-w-4xl mx-auto py-6">
+      <div class="glass-card p-6 rounded-3xl shadow-xl mb-6">
+        <h2 class="text-base sm:text-lg font-black text-slate-800 mb-1 flex items-center gap-2">
+          <i data-lucide="message-square" class="w-5 h-5 text-indigo-600"></i>
+          <span>Góc Chia Sẻ & Trải Lòng Tuổi Học Trò</span>
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">Gửi gắm tâm sự để được lắng nghe và đồng cảm. Hoàn toàn có thể ẩn danh.</p>
+
+        <form id="shareForm" onsubmit="handleCreateShare(event)" class="space-y-3">
+          <input type="text" id="shareTitle" required placeholder="Tiêu đề câu chuyện của em..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-300">
+          <textarea id="shareContent" required rows="3" placeholder="Nội dung tâm sự em muốn chia sẻ cùng các bạn..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none focus:ring-2 focus:ring-indigo-300"></textarea>
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs text-slate-600 font-semibold cursor-pointer">
+              <input type="checkbox" id="shareAnon" checked class="w-4 h-4 rounded text-indigo-600">
+              <span>Đăng ẩn danh</span>
+            </label>
+            <button type="submit" class="px-5 py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-md hover:bg-indigo-700 transition">
+              Đăng Tâm Sự
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="space-y-4" id="sharedPostsContainer">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- TAB 5: CHỐNG BẮT NẠT HỌC ĐƯỜNG -->
+    <section id="tab-bully" class="tab-pane hidden max-w-3xl mx-auto py-6">
+      <div class="glass-card p-6 sm:p-8 rounded-3xl shadow-xl">
+        <div class="flex items-center gap-3 mb-4 text-rose-600">
+          <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">
+            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-rose-700">Hòm Thư Báo Cáo Bạo Lực Học Đường</h2>
+            <p class="text-xs text-slate-500">Bảo mật danh tính tuyệt đối • Ban Giám Hiệu can thiệp ngay lập tức</p>
+          </div>
+        </div>
+
+        <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-xs text-rose-800 mb-5 leading-relaxed flex items-start gap-2">
+          <i data-lucide="lock" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i>
+          <span>Nếu em hoặc bạn bè đang bị cô lập, đánh đập, xúc phạm danh dự hoặc đe dọa trên mạng, hãy gửi báo cáo ngay. Thầy cô luôn đứng về phía em!</span>
+        </div>
+
+        <form id="bullyForm" onsubmit="handleSendBullyReport(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Hình thức vi phạm:</label>
+              <select id="bullyType" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+                <option value="Bạo lực ngôn từ, lăng mạ">Bạo lực ngôn từ, lăng mạ, xúc phạm</option>
+                <option value="Bạo lực thể xác">Bạo lực thể xác, đánh nhau</option>
+                <option value="Bắt nạt trên mạng (Cyberbullying)">Bắt nạt trên mạng (Cyberbullying)</option>
+                <option value="Cô lập, tẩy chay có tổ chức">Cô lập, tẩy chay có tổ chức</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Lớp / Địa điểm:</label>
+              <input type="text" id="bullyLocation" required placeholder="Ví dụ: Lớp 8A3, sân trường..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Chi tiết sự việc:</label>
+            <textarea id="bullyDetail" required rows="4" placeholder="Mô tả cụ thể sự việc đã diễn ra..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Thông tin liên hệ (Tùy chọn - để trống để ẩn danh 100%):</label>
+            <input type="text" id="bullyContact" placeholder="SĐT hoặc email cá nhân nếu muốn nhận phản hồi riêng..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+          </div>
+
+          <button type="submit" class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 text-white font-extrabold text-sm rounded-2xl shadow-lg hover:scale-101 active:scale-98 transition flex items-center justify-center gap-2">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+            <span>GỬI BÁO CÁO BẢO MẬT NGAY</span>
+          </button>
+        </form>
+        <div id="bullySuccess" class="hidden mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-center space-y-2"></div>
+      </div>
+    </section>
+
+    <!-- TAB 6: THƯ VIỆN KỸ NĂNG SỐNG -->
+    <section id="tab-library" class="tab-pane hidden max-w-4xl mx-auto py-6">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-black text-slate-800">Thư Viện Kỹ Năng & Tâm Lý Học Đường</h2>
+        <p class="text-xs text-slate-500 mt-1">Cẩm nang xoa dịu âu lo, làm chủ cảm xúc và kiến tạo tình bạn đẹp</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="libraryCards">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- TAB 7: ĐÃ LƯU (SAVED ITEMS) -->
+    <section id="tab-saved" class="tab-pane hidden max-w-3xl mx-auto py-6">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+            <i data-lucide="bookmark" class="w-5 h-5 fill-indigo-600"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-slate-800">Bài Viết & Cẩm Nang Đã Lưu</h2>
+            <p class="text-xs text-slate-500">Được đồng bộ an toàn trên hệ thống Firestore</p>
+          </div>
+        </div>
+      </div>
+      <div id="savedListContainer" class="space-y-3">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- TAB 8: ĐẶT LỊCH TƯ VẤN -->
+    <section id="tab-appointment" class="tab-pane hidden max-w-4xl mx-auto py-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Danh sách chuyên gia -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-card p-5 rounded-3xl shadow-md border-teal-200">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-3xl">👨‍🏫</span>
+              <div>
+                <h3 class="font-extrabold text-sm text-slate-800">ThS. Nguyễn Tuấn Anh</h3>
+                <p class="text-xs text-teal-700 font-bold">Chuyên gia Tâm lý Học đường (THCS)</p>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed mb-2">Tư vấn áp lực thi cử, định hướng cảm xúc tuổi dậy thì, bất đồng ý kiến với gia đình.</p>
+            <div class="text-[11px] text-slate-400 font-medium">📍 Phòng Tư vấn Tâm lý 204 (Tầng 2 Nhà A)</div>
+          </div>
+
+          <div class="glass-card p-5 rounded-3xl shadow-md border-purple-200">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-3xl">👩‍🏫</span>
+              <div>
+                <h3 class="font-extrabold text-sm text-slate-800">Cô Nguyễn Thị Thùy Trang</h3>
+                <p class="text-xs text-purple-700 font-bold">Chuyên viên Tham vấn (Tiểu học & THCS)</p>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed mb-2">Lắng nghe nỗi sợ hãi, bẽn lẽn, hỗ trợ xây dựng sự tự tin và kỹ năng hòa nhập bạn bè.</p>
+            <div class="text-[11px] text-slate-400 font-medium">📍 Phòng Hỗ trợ Cảm xúc 102 (Nhà Thư viện)</div>
+          </div>
+        </div>
+
+        <!-- Form đăng ký -->
+        <div class="lg:col-span-7 glass-card p-6 rounded-3xl shadow-xl">
+          <h2 class="text-base sm:text-lg font-black text-slate-800 mb-1 flex items-center gap-2">
+            <i data-lucide="calendar" class="w-5 h-5 text-teal-600"></i>
+            <span>Đăng Ký Lịch Gặp Chuyên Gia</span>
+          </h2>
+          <p class="text-xs text-slate-500 mb-4">Hoàn toàn riêng tư và bảo mật thông tin học sinh.</p>
+
+          <form id="appointmentForm" onsubmit="handleBookAppoint(event)" class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Chuyên gia phụ trách:</label>
+              <select id="appointCounselor" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 bg-white outline-none">
+                <option value="ThS. Nguyễn Tuấn Anh">ThS. Nguyễn Tuấn Anh (THCS - Phòng 204)</option>
+                <option value="Cô Nguyễn Thị Thùy Trang">Cô Nguyễn Thị Thùy Trang (Tiểu học - Phòng 102)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Ngày hẹn:</label>
+                <input type="date" id="appointDate" required class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Khung giờ:</label>
+                <select id="appointTime" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+                  <option value="08:30 (Giờ ra chơi sáng)">08:30 (Giờ ra chơi sáng)</option>
+                  <option value="10:00 (Tiết trống sáng)">10:00 (Tiết trống sáng)</option>
+                  <option value="14:30 (Giờ ra chơi chiều)">14:30 (Giờ ra chơi chiều)</option>
+                  <option value="16:30 (Sau giờ tan học)">16:30 (Sau giờ tan học)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Vấn đề em muốn trò chuyện:</label>
+              <textarea id="appointNote" required rows="3" placeholder="Ví dụ: Em cảm thấy kiệt sức vì kỳ thi sắp tới, khó ngủ..." class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Thông tin liên hệ (SĐT / Lớp):</label>
+              <input type="text" id="appointContact" placeholder="Ví dụ: Em An lớp 8A2 hoặc SĐT 0912xxxxxx..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 outline-none">
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:scale-101 active:scale-98 transition">
+              XÁC NHẬN ĐẶT LỊCH HẸN
+            </button>
+          </form>
+          <div id="appointAlert" class="hidden mt-3 p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 text-center"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 9: QUẢN TRỊ (DASHBOARD) -->
+    <section id="tab-dashboard" class="tab-pane hidden max-w-4xl mx-auto py-6">
+      <div class="glass-card p-6 rounded-3xl shadow-xl mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <i data-lucide="shield" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-slate-800">Quản Trị Tâm Lý Học Đường</h2>
+            <p class="text-xs text-slate-500">Dành cho BGH & Chuyên gia tư vấn trường học</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="glass-card p-4 rounded-3xl border-rose-200">
+          <div class="text-xs font-bold text-rose-700">Báo Cáo Bạo Lực</div>
+          <div id="countBully" class="text-2xl font-black text-rose-900 mt-1">0</div>
+        </div>
+        <div class="glass-card p-4 rounded-3xl border-teal-200">
+          <div class="text-xs font-bold text-teal-700">Lịch Hẹn Tư Vấn</div>
+          <div id="countAppoint" class="text-2xl font-black text-teal-900 mt-1">0</div>
+        </div>
+        <div class="glass-card p-4 rounded-3xl border-indigo-200">
+          <div class="text-xs font-bold text-indigo-700">Bài Chia Sẻ Học Sinh</div>
+          <div id="countPosts" class="text-2xl font-black text-indigo-900 mt-1">0</div>
+        </div>
+      </div>
+
+      <div class="glass-card p-6 rounded-3xl shadow-xl space-y-4">
+        <h3 class="font-extrabold text-slate-800 text-sm">Hồ Sơ Cần Xử Lý Gần Đây</h3>
+        <div id="dashboardRecentList" class="space-y-3">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 10: ĐĂNG NHẬP (LOGIN & DEMO ACCOUNTS) -->
+    <section id="tab-login" class="tab-pane hidden max-w-4xl mx-auto py-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        
+        <!-- Form login -->
+        <div class="md:col-span-6 glass-card p-6 sm:p-8 rounded-3xl shadow-xl">
+          <h2 class="text-xl font-black text-slate-800 mb-1 text-center">Đăng Nhập Tài Khoản</h2>
+          <p class="text-xs text-slate-500 mb-6 text-center">Đồng bộ dữ liệu trên Firestore (hinh123-fd678)</p>
+
+          <form onsubmit="handleManualLogin(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Email:</label>
+              <input type="email" id="loginEmail" required placeholder="tuananh.nguyen@school.edu.vn" class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Mật khẩu:</label>
+              <input type="password" id="loginPass" required placeholder="••••••••" class="w-full text-xs sm:text-sm p-3 rounded-2xl border border-slate-200 outline-none">
+            </div>
+            <button type="submit" class="w-full py-3 bg-indigo-600 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg hover:bg-indigo-700 transition">
+              Đăng Nhập
+            </button>
+          </form>
+        </div>
+
+        <!-- 1-Click Demo Accounts -->
+        <div class="md:col-span-6 glass-card p-6 sm:p-8 rounded-3xl shadow-xl space-y-3">
+          <h3 class="font-black text-sm text-slate-800 mb-1 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-indigo-600"></i>
+            <span>Tài Khoản Mẫu Trải Nghiệm Nhanh</span>
+          </h3>
+          <p class="text-xs text-slate-500 mb-2">Bấm "Vào ngay" để đăng nhập lập tức:</p>
+
+          <div class="space-y-2 text-xs" id="demoAccountsList">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- 4. MODAL SOS KHẨN CẤP 111 (POPUP)                         -->
+  <!-- ========================================================= -->
+  <div id="emergencyModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-lg w-full p-6 sm:p-8 rounded-3xl shadow-2xl border-2 border-rose-400 relative animate-in fade-in zoom-in-95">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div class="flex items-center gap-3 text-rose-600">
+          <div class="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">
+            <i data-lucide="alert-triangle" class="w-7 h-7 text-rose-600 animate-pulse"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-rose-700">HỖ TRỢ KHẨN CẤP 111</h3>
+            <p class="text-xs text-slate-500">Tổng đài Quốc gia Bảo vệ Trẻ em Việt Nam</p>
+          </div>
+        </div>
+        <button onclick="closeModal('emergencyModal')" class="p-1 rounded-full hover:bg-slate-100 text-slate-400">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
+        Nếu em đang gặp nguy hiểm về thể xác, bị bạo lực học đường, xâm hại hoặc khủng hoảng tâm lý nghiêm trọng, hãy gọi ngay tới các đầu số khẩn cấp hoàn toàn miễn phí:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <a href="tel:111" class="flex items-center gap-3 bg-gradient-to-br from-rose-500 to-pink-600 text-white p-3.5 rounded-2xl shadow-md hover:scale-102 transition">
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <i data-lucide="phone-call" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-2xl font-black leading-none">111</div>
+            <div class="text-[11px] text-rose-100 mt-0.5">Tổng đài 111 (24/7 Miễn phí)</div>
+          </div>
+        </a>
+
+        <a href="tel:115" class="flex items-center gap-3 bg-gradient-to-br from-amber-500 to-orange-600 text-white p-3.5 rounded-2xl shadow-md hover:scale-102 transition">
+          <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <i data-lucide="phone-call" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-2xl font-black leading-none">115</div>
+            <div class="text-[11px] text-amber-100 mt-0.5">Cấp cứu Y tế Khẩn cấp</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Sơ cứu tâm lý 5-4-3-2-1 -->
+      <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 mb-5 text-[11px] text-sky-900 leading-relaxed">
+        <strong class="block text-xs font-bold mb-1">Kỹ thuật xoa dịu hoảng loạn tức thì (5-4-3-2-1):</strong>
+        <p>Hít sâu bằng mũi, thở nhẹ bằng miệng. Nhìn xung quanh và gọi tên <strong>5 đồ vật</strong>, chạm vào <strong>4 thứ</strong> quanh em, nghe <strong>3 âm thanh</strong>, và gọi cho thầy cô tư vấn tâm lý trường học.</p>
+      </div>
+
+      <button onclick="closeModal('emergencyModal')" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition">
+        Đóng Cửa Sổ Hỗ Trợ
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 5. FOOTER                                                 -->
+  <!-- ========================================================= -->
+  <footer class="mt-auto glass border-t border-white/60 py-6 text-slate-500 text-xs">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+      <div>
+        <p class="font-bold text-slate-800 text-sm">Hệ Thống Tham Vấn Tâm Lý Học Đường</p>
+        <p class="text-[11px] text-slate-400">Đồng hành cùng học sinh vững vàng cảm xúc • Nền tảng Firebase hinh123-fd678</p>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="bg-rose-50 text-rose-700 px-3 py-1 rounded-xl font-bold border border-rose-200">Hotline 111 (24/7 Miễn phí)</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================= -->
+  <!-- 6. JAVASCRIPT XỬ LÝ (TABS, MOCK AI, FIREBASE, DATA)       -->
+  <!-- ========================================================= -->
+  <script>
+    // -------------------------------------------------------------
+    // A. Khởi tạo Firebase SDK (Dự án: hinh123-fd678)
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDoJVOu_L_J61MK3RWgB2C0xbP7F19mw3A",
+      authDomain: "hinh123-fd678.firebaseapp.com",
+      databaseURL: "https://hinh123-fd678-default-rtdb.firebaseio.com",
+      projectId: "hinh123-fd678",
+      storageBucket: "hinh123-fd678.firebasestorage.app",
+      messagingSenderId: "185063045840",
+      appId: "1:185063045840:web:49aed5e7258cae072a7cd5"
+    };
+
+    let fbApp, fbAuth, fbDb;
+    try {
+      fbApp = firebase.initializeApp(firebaseConfig);
+      fbAuth = firebase.auth();
+      fbDb = firebase.firestore();
+    } catch (e) {
+      console.warn("Firebase Init State:", e);
+    }
+
+    // -------------------------------------------------------------
+    // B. State Dữ Liệu Ứng Dụng
+    // -------------------------------------------------------------
+    let currentTab = 'home';
+    let currentUser = null;
+    let selectedEmoji = { emoji: '😄', label: 'Vui vẻ' };
+
+    const EMOJIS = [
+      { emoji: '😄', label: 'Vui vẻ' },
+      { emoji: '😊', label: 'Bình yên' },
+      { emoji: '😰', label: 'Lo lắng' },
+      { emoji: '😢', label: 'Buồn bã' },
+      { emoji: '😡', label: 'Bực bội' },
+      { emoji: '🥱', label: 'Mệt mỏi' },
+      { emoji: '🤩', label: 'Hào hứng' },
+      { emoji: '🥺', label: 'Cần sẻ chia' }
+    ];
+
+    const DEMO_ACCOUNTS = [
+      { name: 'Em Trần Hoài An (THCS)', email: 'an.tran@school.edu.vn', pass: 'demo123', role: 'Học sinh' },
+      { name: 'Em Nguyễn Thanh Bình (Tiểu học)', email: 'binh.nguyen@school.edu.vn', pass: 'demo123', role: 'Học sinh' },
+      { name: 'ThS. Nguyễn Tuấn Anh (THCS)', email: 'tuananh.nguyen@school.edu.vn', pass: 'demo123', role: 'Tư vấn viên' },
+      { name: 'Cô Nguyễn Thị Thùy Trang (Tiểu học)', email: 'thuytrang.nguyen@school.edu.vn', pass: 'demo123', role: 'Tư vấn viên' },
+      { name: 'Thầy Minh (Ban Giám Hiệu)', email: 'quantri.minh@school.edu.vn', pass: 'admin123', role: 'Quản trị viên' }
+    ];
+
+    const ARTICLES = [
+      {
+        id: 'art1',
+        title: '5 Bước Giải Tỏa Cơn Hoảng Loạn Trước Phòng Thi',
+        summary: 'Cách làm dịu nhịp tim và giữ sự tỉnh táo, giúp não bộ không bị "đóng băng" khi nhận đề thi.',
+        category: 'Áp lực học tập',
+        content: '1. Hít thở sâu bằng bụng.\n2. Uống từng ngụm nước nhỏ.\n3. Viết ra giấy nháp các công thức nhớ trước.\n4. Làm câu dễ trước, câu khó sau.\n5. Điểm số một bài thi không định nghĩa tương lai em!'
+      },
+      {
+        id: 'art2',
+        title: 'Làm Sao Khi Cảm Thấy Mình Lạc Lõng Giữa Tập Thể Lớp?',
+        summary: 'Bí quyết mở lòng, kết nối với những người bạn chân thành cùng tần số trong trường học.',
+        category: 'Quan hệ bạn bè',
+        content: 'Không cần hòa tan vào đám đông nếu điều đó làm em kiệt sức. Hãy bắt đầu từ một người bạn cùng bàn, một nụ cười, và hãy luôn trân trọng bản thân mình trước tiên.'
+      },
+      {
+        id: 'art3',
+        title: 'Kỹ Thuật Chiếc Hộp Cảm Xúc: Quản Lý Cơn Giận Lành Mạnh',
+        summary: 'Học cách xoa dịu bực bội mà không làm tổn thương chính mình và mọi người xung quanh.',
+        category: 'Kiểm soát cảm xúc',
+        content: 'Dừng lại 10 giây trước khi phản ứng. Rửa mặt bằng nước mát hoặc viết tất cả bực bội ra giấy nháp rồi xé nhỏ vứt đi. Trở lại đối thoại khi đã thực sự bình tâm.'
+      },
+      {
+        id: 'art4',
+        title: 'Trò Chuyện Cùng Bố Mẹ Khi Điểm Số Không Như Ý',
+        summary: 'Cách thẳng thắn chia sẻ, nhận trách nhiệm và tìm kiếm sự thấu hiểu từ phụ huynh.',
+        category: 'Gia đình',
+        content: 'Chủ động nói thật với bố mẹ, giải thích nguyên nhân và đưa ra kế hoạch khắc phục. Sự chín chắn và chân thành sẽ giúp bố mẹ an lòng hơn rất nhiều.'
+      }
+    ];
+
+    // Dữ liệu ban đầu
+    let emotionLogs = JSON.parse(localStorage.getItem('tamly_emotions') || '[]');
+    let sharedPosts = JSON.parse(localStorage.getItem('tamly_posts') || '[]');
+    let bullyReports = JSON.parse(localStorage.getItem('tamly_bully') || '[]');
+    let appointments = JSON.parse(localStorage.getItem('tamly_appoint') || '[]');
+    let savedItems = JSON.parse(localStorage.getItem('tamly_saved') || '[]');
+
+    if (sharedPosts.length === 0) {
+      sharedPosts = [
+        { id: 'p1', title: 'Áp lực trước kỳ thi vào lớp 10', content: 'Dạo này bài vở nhiều quá làm mình hay mất ngủ, sợ thi trượt sẽ làm bố mẹ thất vọng...', author: 'Bạn học ẩn danh', date: 'Hôm nay' },
+        { id: 'p2', title: 'Cảm giác lạc lõng trong lớp mới', content: 'Mình mới chuyển trường nên chưa quen ai, ra chơi chỉ ngồi một mình đọc sách...', author: 'Học sinh khối 7', date: 'Hôm qua' }
+      ];
+      localStorage.setItem('tamly_posts', JSON.stringify(sharedPosts));
+    }
+
+    // -------------------------------------------------------------
+    // C. Chuyển Tab & Modal
+    // -------------------------------------------------------------
+    function switchTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      const activeEl = document.getElementById(`tab-${tabId}`);
+      if (activeEl) activeEl.classList.remove('hidden');
+
+      // Update navbar styling
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabId) {
+          btn.className = 'nav-btn px-3 py-1.5 rounded-xl transition-all bg-indigo-600 text-white font-bold shadow-xs';
+        } else {
+          btn.className = 'nav-btn px-3 py-1.5 rounded-xl transition-all text-slate-600 hover:bg-indigo-50 hover:text-indigo-600';
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      renderCurrentTabDetails();
+    }
+
+    function openModal(id) {
+      document.getElementById(id)?.classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id)?.classList.add('hidden');
+    }
+
+    // -------------------------------------------------------------
+    // D. Render Components & UI
+    // -------------------------------------------------------------
+    function renderEmojiButtons() {
+      const container = document.getElementById('emojiButtonsContainer');
+      if (!container) return;
+      container.innerHTML = EMOJIS.map(item => `
+        <button type="button" onclick="selectEmoji('${item.label}')" class="flex flex-col items-center p-2 rounded-2xl border transition-all ${selectedEmoji.label === item.label ? 'border-indigo-500 bg-indigo-50 scale-105 shadow-xs' : 'border-slate-100 bg-white/70 hover:bg-slate-50'}">
+          <span class="text-2xl">${item.emoji}</span>
+          <span class="text-[10px] font-bold text-slate-700 mt-1">${item.label}</span>
+        </button>
+      `).join('');
+    }
+
+    function selectEmoji(label) {
+      const found = EMOJIS.find(e => e.label === label);
+      if (found) selectedEmoji = found;
+      renderEmojiButtons();
+    }
+
+    function renderEmotionHistory() {
+      const list = document.getElementById('emotionHistoryList');
+      if (!list) return;
+      if (emotionLogs.length === 0) {
+        list.innerHTML = `<p class="text-center py-6 text-slate-400 text-xs">Chưa có ghi chép nào. Em hãy ghi lại cảm xúc đầu tiên nhé!</p>`;
+        return;
+      }
+      list.innerHTML = emotionLogs.map(log => `
+        <div class="p-3 bg-white rounded-2xl border border-slate-100 shadow-2xs space-y-1">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-800">${log.emoji} ${log.label}</span>
+            <span class="text-[10px] text-slate-400">${log.date}</span>
+          </div>
+          <p class="text-xs text-slate-600 bg-slate-50 p-2 rounded-xl">"${log.note}"</p>
+        </div>
+      `).join('');
+    }
+
+    function renderSharedPosts() {
+      const container = document.getElementById('sharedPostsContainer');
+      if (!container) return;
+      container.innerHTML = sharedPosts.map(p => `
+        <div class="glass-card p-5 rounded-3xl shadow-md space-y-2">
+          <div class="flex items-start justify-between">
+            <div>
+              <h4 class="font-black text-slate-800 text-sm sm:text-base">${p.title}</h4>
+              <p class="text-[11px] text-indigo-600 font-bold">${p.author} • ${p.date || 'Hôm nay'}</p>
+            </div>
+            <button onclick="saveItem('${p.title}', '${p.content.replace(/'/g, "\\'")}')" class="p-2 text-slate-400 hover:text-indigo-600 rounded-xl" title="Lưu bài">
+              <i data-lucide="bookmark" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-700 bg-slate-50/70 p-3 rounded-2xl leading-relaxed whitespace-pre-line">${p.content}</p>
+          <div class="flex items-center gap-2 text-xs text-rose-500 font-bold pt-1">
+            <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500"></i>
+            <span>Đồng cảm cùng bạn</span>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderLibrary() {
+      const container = document.getElementById('libraryCards');
+      if (!container) return;
+      container.innerHTML = ARTICLES.map(art => `
+        <div class="glass-card p-5 rounded-3xl shadow-md flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">${art.category}</span>
+            <h3 class="font-bold text-sm sm:text-base text-slate-800 my-2">${art.title}</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-3">${art.summary}</p>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <button onclick="alert('${art.title}:\\n\\n${art.content.replace(/\n/g, '\\n')}')" class="text-xs font-bold text-purple-600 hover:underline">Đọc cẩm nang</button>
+            <button onclick="saveItem('${art.title}', '${art.content.replace(/'/g, "\\'")}')" class="p-1.5 text-slate-400 hover:text-purple-600" title="Lưu bài">
+              <i data-lucide="bookmark" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderSavedList() {
+      const container = document.getElementById('savedListContainer');
+      if (!container) return;
+      if (savedItems.length === 0) {
+        container.innerHTML = `<div class="glass-card p-8 rounded-3xl text-center text-slate-400 text-xs">Chưa có bài viết hay cẩm nang nào được lưu.</div>`;
+        return;
+      }
+      container.innerHTML = savedItems.map((item, idx) => `
+        <div class="glass-card p-4 rounded-3xl shadow-sm flex items-start justify-between gap-4">
+          <div>
+            <h4 class="font-bold text-sm text-slate-900">${item.title}</h4>
+            <p class="text-xs text-slate-600 mt-1 line-clamp-2">${item.content}</p>
+          </div>
+          <button onclick="deleteSavedItem(${idx})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl" title="Bỏ lưu">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function renderDashboard() {
+      document.getElementById('countBully').innerText = bullyReports.length;
+      document.getElementById('countAppoint').innerText = appointments.length;
+      document.getElementById('countPosts').innerText = sharedPosts.length;
+
+      const recentList = document.getElementById('dashboardRecentList');
+      if (!recentList) return;
+      if (bullyReports.length === 0 && appointments.length === 0) {
+        recentList.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Hiện không có cảnh báo mới.</p>`;
+        return;
+      }
+      recentList.innerHTML = [
+        ...bullyReports.map(b => `
+          <div class="p-3 bg-rose-50/70 border border-rose-200 rounded-2xl flex items-center justify-between text-xs">
+            <div>
+              <span class="font-mono font-bold text-rose-700">${b.code}</span>
+              <span class="ml-2 font-medium text-slate-800">[${b.type}] tại ${b.location}</span>
+            </div>
+            <span class="text-[10px] bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full font-bold">Khẩn cấp</span>
+          </div>
+        `),
+        ...appointments.map(a => `
+          <div class="p-3 bg-teal-50/70 border border-teal-200 rounded-2xl flex items-center justify-between text-xs">
+            <div>
+              <span class="font-bold text-teal-800">${a.counselor}</span>
+              <span class="ml-2 text-slate-700">Ngày: ${a.date} (${a.time})</span>
+            </div>
+            <span class="text-[10px] bg-teal-200 text-teal-900 px-2 py-0.5 rounded-full font-bold">Đã tiếp nhận</span>
+          </div>
+        `)
+      ].join('');
+    }
+
+    function renderDemoAccounts() {
+      const container = document.getElementById('demoAccountsList');
+      if (!container) return;
+      container.innerHTML = DEMO_ACCOUNTS.map(acc => `
+        <div class="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between">
+          <div>
+            <div class="font-bold text-slate-800">${acc.name}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${acc.email} • Pass: ${acc.pass}</div>
+          </div>
+          <button onclick="loginDemo('${acc.email}', '${acc.pass}', '${acc.name}')" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 rounded-xl font-bold transition">
+            Vào ngay
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function renderCurrentTabDetails() {
+      renderEmojiButtons();
+      renderEmotionHistory();
+      renderSharedPosts();
+      renderLibrary();
+      renderSavedList();
+      renderDashboard();
+      renderDemoAccounts();
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------
+    // E. Xử Lý Form & Hành Động
+    // -------------------------------------------------------------
+    function handleSaveEmotion(e) {
+      e.preventDefault();
+      const note = document.getElementById('emotionNote').value;
+      const topic = document.getElementById('emotionTopic').value;
+      const isAnon = document.getElementById('emotionAnon').checked;
+
+      const newLog = {
+        emoji: selectedEmoji.emoji,
+        label: selectedEmoji.label,
+        topic,
+        note,
+        author: isAnon ? 'Ẩn danh' : (currentUser ? currentUser.email : 'Học sinh'),
+        date: new Date().toLocaleDateString('vi-VN')
+      };
+
+      emotionLogs.unshift(newLog);
+      localStorage.setItem('tamly_emotions', JSON.stringify(emotionLogs));
+      
+      // Đồng bộ Firestore nếu khả dụng
+      if (fbDb) {
+        try { fbDb.collection('emotionLogs').add(newLog); } catch(err){}
+      }
+
+      document.getElementById('emotionNote').value = '';
+      const alertEl = document.getElementById('emotionAlert');
+      alertEl.innerText = 'Đã lưu lại cảm xúc của em an toàn!';
+      alertEl.classList.remove('hidden');
+      setTimeout(() => alertEl.classList.add('hidden'), 3000);
+      renderEmotionHistory();
+    }
+
+    function handleCreateShare(e) {
+      e.preventDefault();
+      const title = document.getElementById('shareTitle').value;
+      const content = document.getElementById('shareContent').value;
+      const isAnon = document.getElementById('shareAnon').checked;
+
+      const newPost = {
+        id: 'post_' + Date.now(),
+        title,
+        content,
+        author: isAnon ? 'Bạn học ẩn danh' : (currentUser ? currentUser.email : 'Học sinh'),
+        date: 'Vừa xong'
+      };
+
+      sharedPosts.unshift(newPost);
+      localStorage.setItem('tamly_posts', JSON.stringify(sharedPosts));
+
+      if (fbDb) {
+        try { fbDb.collection('posts').add(newPost); } catch(err){}
+      }
+
+      document.getElementById('shareTitle').value = '';
+      document.getElementById('shareContent').value = '';
+      alert('Đã đăng bài chia sẻ thành công!');
+      renderSharedPosts();
+    }
+
+    function handleSendBullyReport(e) {
+      e.preventDefault();
+      const type = document.getElementById('bullyType').value;
+      const location = document.getElementById('bullyLocation').value;
+      const detail = document.getElementById('bullyDetail').value;
+      const contact = document.getElementById('bullyContact').value || 'Ẩn danh';
+      const code = 'SOS-BN-' + Math.floor(100000 + Math.random() * 900000);
+
+      const report = { code, type, location, detail, contact, time: new Date().toLocaleString('vi-VN') };
+      bullyReports.unshift(report);
+      localStorage.setItem('tamly_bully', JSON.stringify(bullyReports));
+
+      if (fbDb) {
+        try { fbDb.collection('bullyingReports').add(report); } catch(err){}
+      }
+
+      document.getElementById('bullyForm').reset();
+      const successEl = document.getElementById('bullySuccess');
+      successEl.innerHTML = `
+        <h4 class="font-black text-emerald-900 text-sm">BÁO CÁO ĐÃ TIẾP NHẬN BẢO MẬT!</h4>
+        <p class="text-xs text-emerald-800">Thầy cô sẽ xác minh và can thiệp ngay để bảo vệ an toàn cho em.</p>
+        <div class="font-mono font-black text-rose-600 bg-white p-2 rounded-xl border border-emerald-300">Mã hồ sơ: ${code}</div>
+      `;
+      successEl.classList.remove('hidden');
+    }
+
+    function handleBookAppoint(e) {
+      e.preventDefault();
+      const counselor = document.getElementById('appointCounselor').value;
+      const date = document.getElementById('appointDate').value;
+      const time = document.getElementById('appointTime').value;
+      const note = document.getElementById('appointNote').value;
+      const contact = document.getElementById('appointContact').value || 'Học sinh ẩn danh';
+
+      const appoint = { counselor, date, time, note, contact };
+      appointments.unshift(appoint);
+      localStorage.setItem('tamly_appoint', JSON.stringify(appointments));
+
+      if (fbDb) {
+        try { fbDb.collection('appointments').add(appoint); } catch(err){}
+      }
+
+      document.getElementById('appointmentForm').reset();
+      const alertEl = document.getElementById('appointAlert');
+      alertEl.innerText = 'Đã đặt lịch hẹn tư vấn thành công! Thầy cô sẽ đón tiếp em tại phòng tư vấn.';
+      alertEl.classList.remove('hidden');
+      setTimeout(() => alertEl.classList.add('hidden'), 4000);
+    }
+
+    function saveItem(title, content) {
+      savedItems.unshift({ title, content });
+      localStorage.setItem('tamly_saved', JSON.stringify(savedItems));
+      alert('Đã lưu bài viết vào mục "Đã lưu"!');
+    }
+
+    function deleteSavedItem(idx) {
+      savedItems.splice(idx, 1);
+      localStorage.setItem('tamly_saved', JSON.stringify(savedItems));
+      renderSavedList();
+    }
+
+    // -------------------------------------------------------------
+    // F. Trợ Lý AI Khung Chat Mô Phỏng
+    // -------------------------------------------------------------
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      appendMessage('user', text);
+
+      setTimeout(() => {
+        let reply = "Thầy cô luôn ở đây lắng nghe em. Những cảm xúc em đang có đều rất bình thường khi gặp áp lực. Em hãy hít thở thật sâu, chia sẻ thêm với thầy cô nhé!";
+        const lower = text.toLowerCase();
+        if (lower.includes('áp lực') || lower.includes('thi cử') || lower.includes('điểm')) {
+          reply = "Thầy cô hiểu cảm giác lo âu thi cử của em. Hãy nhớ: Điểm số chỉ là một bài kiểm tra, không định nghĩa tương lai em. Hãy chia nhỏ bài học ra ôn 25 phút rồi nghỉ 5 phút (Pomodoro), và ngủ đủ giấc tối nay em nhé!";
+        } else if (lower.includes('bạn bè') || lower.includes('xa lánh') || lower.includes('tẩy chay')) {
+          reply = "Bị bạn bè xa lánh rất tổn thương, nhưng em hãy nhớ: LỖI HOÀN TOÀN KHÔNG Ở EM! Em không cần cố làm vừa lòng tất cả mọi người. Nếu bị xúc phạm hay đe dọa, em hãy gửi báo cáo ở mục 'Chống Bắt Nạt' để thầy cô bảo vệ em an toàn!";
+        } else if (lower.includes('thở') || lower.includes('4-7-8') || lower.includes('bình tĩnh')) {
+          reply = "Cùng tập thở 4-7-8 với mình nào: Hít sâu bằng mũi 4 giây -> Giữ hơi lại 7 giây -> Thở từ từ bằng miệng 8 giây. Lặp lại 4 lần sẽ giúp nhịp tim em chậm lại và xua tan hoảng loạn!";
+        }
+        appendMessage('ai', reply);
+      }, 700);
+    }
+
+    function sendQuickPrompt(promptText) {
+      document.getElementById('chatInput').value = promptText;
+      sendChatMessage();
+    }
+
+    function appendMessage(sender, text) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      const isUser = sender === 'user';
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`;
+      msgDiv.innerHTML = isUser
+        ? `<div class="max-w-[80%] p-3.5 rounded-2xl text-xs sm:text-sm bg-indigo-600 text-white shadow-xs">${text}</div>`
+        : `<div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 text-white flex items-center justify-center shrink-0"><i data-lucide="bot" class="w-4 h-4"></i></div>
+           <div class="max-w-[80%] p-3.5 rounded-2xl text-xs sm:text-sm bg-white text-slate-800 border border-slate-100 shadow-xs leading-relaxed whitespace-pre-line">${text}</div>`;
+      box.appendChild(msgDiv);
+      box.scrollTop = box.scrollHeight;
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------
+    // G. Đăng Nhập & Tài Khoản
+    // -------------------------------------------------------------
+    function loginDemo(email, pass, name) {
+      currentUser = { email, displayName: name };
+      updateAuthUI();
+      alert(`Đã đăng nhập thành công với tài khoản: ${name} (${email})!`);
+      switchTab('home');
+    }
+
+    function handleManualLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      currentUser = { email, displayName: email.split('@')[0] };
+      updateAuthUI();
+      alert(`Đăng nhập thành công với email: ${email}!`);
+      switchTab('home');
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      updateAuthUI();
+      alert('Đã đăng xuất!');
+      switchTab('home');
+    }
+
+    function updateAuthUI() {
+      const area = document.getElementById('authStatusArea');
+      if (!area) return;
+      if (currentUser) {
+        area.innerHTML = `
+          <div class="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-2.5 py-1">
+            <span class="text-xs font-bold text-indigo-900 truncate max-w-[120px]">${currentUser.displayName || currentUser.email}</span>
+            <button onclick="logoutUser()" class="text-slate-400 hover:text-rose-600 p-1" title="Đăng xuất">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+      } else {
+        area.innerHTML = `
+          <button onclick="switchTab('login')" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition-all hover:scale-105">
+            Đăng nhập
+          </button>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // Khởi chạy khi load trang
+    window.addEventListener('DOMContentLoaded', () => {
+      switchTab('home');
+      renderCurrentTabDetails();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
